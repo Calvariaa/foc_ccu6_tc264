@@ -712,7 +712,7 @@ void pwm_set_freq(pwm_channel_enum pwmch, uint32 freq, uint32 duty)
     }
 
     IfxGtm_Atom_Ch_setCompareOneShadow(&MODULE_GTM.ATOM[atom_channel->atom], atom_channel->channel, duty);
-    IfxGtm_Atom_Ch_setCompareZeroShadow(&MODULE_GTM.ATOM[atom_channel->atom], atom_channel->channel, period);
+    IfxGtm_Atom_Ch_setCompareZeroShadow(&MODULE_GTM.ATOM[atom_channel->atom], atom_channel->channel, CMU_CLK_FREQ / freq);
 }
 
 //-------------------------------------------------------------------------------------------------------------------

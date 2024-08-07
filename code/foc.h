@@ -78,21 +78,6 @@ typedef struct
 
 } out_variable;
 
-// svpwm输出的三相电流
-typedef struct
-{
-        float t_a;
-        float t_b;
-        float t_c;
-} svpwm_out;
-
-typedef struct
-{
-        float a;
-        float b;
-        float c;
-} svpwm_in;
-
 typedef struct
 {
         uint16 AH; // A上桥定时器比较值
@@ -114,12 +99,6 @@ typedef struct
         float y;
         float z;
 } Instrument_Typedef; // 为了减少计算量的中间变量结构体
-// typedef struct
-//{
-//     double u_alpha;
-//     double u_beta;
-//
-// }CLARK_Typedef;
 
 typedef struct
 {
@@ -138,15 +117,16 @@ typedef struct
         Period_Typedef Period; // 各桥定时器比较值
         // Current_CL_Typedef Current_CL;  //电流环PID参数
 } FOC_Parm_Typedef;
+
 // extern FOC_Parm_Typedef FOC;
 clark_variable clark_cacl(adc_struct current);
 park_variable park_cacl(clark_variable clark, float theta);
-svpwm_out svpwm(out_variable input_voltage);
 out_variable iPark_Calc(ipark_variable park, double theta);
 Period_Typedef PeriodCal(VectorTime_Typedef vector, uint8 N, uint16 T);
 VectorTime_Typedef Vector_Calc(Instrument_Typedef tool, uint8 N, uint8 Udc, uint16 T);
 uint8 Electrical_Sector_Judge(Instrument_Typedef tool);
 Instrument_Typedef Tool_Calc(out_variable clark2);
-svpwm_out mid_cacl(svpwm_out in);
-void hall_change();
+
+extern int slow_startup_count;
+
 #endif /* CODE_FOC_H_ */

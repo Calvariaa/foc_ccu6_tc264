@@ -42,6 +42,7 @@ uint8 key_status = 1;  // 当前按键状态
 uint8 key_last_status; // 上一次按键状态
 uint8 key_flag;        // 按键触发标志位
 
+
 void led_init(void)
 {
     gpio_init(LED_RUN_PIN, GPO, 1, GPO_PUSH_PULL);   // 初始化运行指示灯
@@ -60,8 +61,7 @@ void led_output(void)
     else
     {
         gpio_set_level(LED_ERR_PIN, 1); // 关闭故障灯
-        // if (motor_state == MOTOR_RUN)
-        if (0)
+        if (slow_startup_count >= 100000)
             gpio_set_level(LED_RUN_PIN, 0); // 开启运行灯
         else
             gpio_set_level(LED_RUN_PIN, 1); // 关闭运行灯

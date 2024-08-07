@@ -4,7 +4,7 @@
 #include "zf_common_headfile.h"
 
 // 各模式开启控制开关
-#define AS5047P_ABI_Part_EN
+#define AS5047P_ABI_Part_EN 1
 #define angle_offset 0.1;
 
 #define MAX_BAUD 50000000

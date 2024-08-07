@@ -60,6 +60,8 @@ void motor_speed_out(void)
 {
     encoder = encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
     encoder_clear_count(AS5047P_TIM);         // 清除对应计数
+
+    motor_control.current_speed = encoder;
     if (encoder)
     {
         pwm_set_freq(MOTOR_SPEED_OUT_PIN, func_abs(encoder), 5000);

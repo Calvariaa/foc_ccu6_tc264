@@ -74,7 +74,8 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     //	key_scan();     //按键扫描
 
     //    //通过速度输出引脚输出当前速度and dir
-    // motor_speed_out();
+    if (slow_startup_count >= 120000)
+        motor_speed_out();
 
     //
     //    #if BLDC_CLOSE_LOOP_ENABLE

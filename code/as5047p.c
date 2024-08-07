@@ -357,7 +357,7 @@ void AS5047P_SPI_Init()
 #if AS5047P_ABI_Part_EN
 void AS5047P_ABI_MODE_Init(void)
 {
-    // encoder_quad_init(AS5047P_TIM,AS5047P_B,AS5047P_A);
+    encoder_quad_init(AS5047P_TIM, AS5047P_B, AS5047P_A);
 }
 #endif
 
