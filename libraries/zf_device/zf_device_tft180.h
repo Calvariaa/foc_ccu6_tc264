@@ -24,13 +24,14 @@
 * 文件名称          zf_device_tft180
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -51,8 +52,9 @@
 #ifndef _zf_device_tft180_h_
 #define _zf_device_tft180_h_
 
-#include "zf_device_type.h"
+#include "zf_common_typedef.h"
 
+//=================================================定义 TFT180 基本配置================================================
 #define TFT180_USE_SOFT_SPI             (0)                                     // 默认使用硬件 SPI 方式驱动 建议使用硬件 SPI 方式驱动
 #if TFT180_USE_SOFT_SPI                                                         // 这两段 颜色正常的才是正确的 颜色灰的就是没有用的
 //====================================================软件 SPI 驱动====================================================
@@ -84,6 +86,8 @@
 #define TFT180_RST(x)                   ((x) ? (gpio_high(TFT180_RES_PIN)) : (gpio_low(TFT180_RES_PIN)))
 #define TFT180_CS(x)                    ((x) ? (gpio_high(TFT180_CS_PIN))  : (gpio_low(TFT180_CS_PIN)))
 #define TFT180_BLK(x)                   ((x) ? (gpio_high(TFT180_BL_PIN))  : (gpio_low(TFT180_BL_PIN)))
+//=================================================定义 TFT180 基本配置================================================
+
 
 //=================================================定义 TFT180 参数结构体===============================================
 typedef enum
@@ -100,34 +104,39 @@ typedef enum
     TFT180_8X16_FONT                    = 1,                                    // 8x16     字体
     TFT180_16X16_FONT                   = 2,                                    // 16x16    字体 目前不支持
 }tft180_font_size_enum;
+
+extern  uint16  tft180_width_max ;
+extern  uint16  tft180_height_max;
+
 //=================================================定义 TFT180 参数结构体===============================================
 
-//===================================================TFT180 基础函数==================================================
-void    tft180_clear                    (void);
-void    tft180_full                     (const uint16 color);
-void    tft180_set_dir                  (tft180_dir_enum dir);
-void    tft180_set_font                 (tft180_font_size_enum font);
-void    tft180_set_color                (const uint16 pen, const  uint16 bgcolor);
-void    tft180_draw_point               (uint16 x, uint16 y, const uint16 color);
-void    tft180_draw_line                (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_end, const uint16 color);
+//=================================================声明 TFT180 基础函数================================================
+void    tft180_clear                    (void);                                                                               // TFT180 清屏函数
+void    tft180_full                     (const uint16 color);                                                                 // TFT180 屏幕填充函数
+void    tft180_set_dir                  (tft180_dir_enum dir);                                                                // TFT180 设置显示方向
+void    tft180_set_font                 (tft180_font_size_enum font);                                                         // TFT180 设置显示字体
+void    tft180_set_color                (const uint16 pen, const  uint16 bgcolor);                                            // TFT180 设置显示颜色
+void    tft180_draw_point               (uint16 x, uint16 y, const uint16 color);                                             // TFT180 画点函数
+void    tft180_draw_line                (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_end, const uint16 color);     // TFT180 画线函数
 
-void    tft180_show_char                (uint16 x, uint16 y, const char dat);
-void    tft180_show_string              (uint16 x, uint16 y, const char dat[]);
-void    tft180_show_int                 (uint16 x,uint16 y, const int32 dat, uint8 num);
-void    tft180_show_uint                (uint16 x,uint16 y, const uint32 dat, uint8 num);
-void    tft180_show_float               (uint16 x,uint16 y, const float dat, uint8 num, uint8 pointnum);
+void    tft180_show_char                (uint16 x, uint16 y, const char dat);                                                 // TFT180 显示字符
+void    tft180_show_string              (uint16 x, uint16 y, const char dat[]);                                               // TFT180 显示字符串
+void    tft180_show_int                 (uint16 x,uint16 y, const int32 dat, uint8 num);                                      // TFT180 显示32位有符号 (去除整数部分无效的0)
+void    tft180_show_uint                (uint16 x,uint16 y, const uint32 dat, uint8 num);                                     // TFT180 显示32位无符号 (去除整数部分无效的0)
+void    tft180_show_float               (uint16 x, uint16 y, const double dat, uint8 num, uint8 pointnum);
 
-void    tft180_show_binary_image        (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height);
-void    tft180_show_gray_image          (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 threshold);
-void    tft180_show_rgb565_image        (uint16 x, uint16 y, const uint16 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 color_mode);
+void    tft180_show_binary_image        (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height);                    // TFT180 显示二值图像 数据每八个点组成一个字节数据
+void    tft180_show_gray_image          (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 threshold);   // TFT180 显示 8bit 灰度图像 带二值化阈值
+void    tft180_show_rgb565_image        (uint16 x, uint16 y, const uint16 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 color_mode); // TFT180 显示 RGB565 彩色图像
 
-void    tft180_show_wave                (uint16 x, uint16 y, const uint16 *wave, uint16 width, uint16 value_max, uint16 dis_width, uint16 dis_value_max);
-void    tft180_show_chinese             (uint16 x, uint16 y, uint8 size, const uint8 *chinese_buffer, uint8 number, const uint16 color);
-
+void    tft180_show_wave                (uint16 x, uint16 y, const uint16 *wave, uint16 width, uint16 value_max, uint16 dis_width, uint16 dis_value_max);              // TFT180 显示波形
+void    tft180_show_chinese             (uint16 x, uint16 y, uint8 size, const uint8 *chinese_buffer, uint8 number, const uint16 color);                               // TFT180 汉字显示
+                                                                                                                              // 1.8寸TFT屏幕初始化
 void    tft180_init                     (void);
-//===================================================TFT180 基础函数==================================================
+//=================================================声明 TFT180 基础函数================================================
 
-//===================================================TFT180 扩展函数==================================================
+
+//=================================================声明 TFT180 扩展函数================================================
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     TFT180 显示小钻风图像
 // 参数说明     p               图像数组指针
@@ -158,8 +167,7 @@ void    tft180_init                     (void);
 // 备注信息     拓展的一键显示函数，默认无缩放，从屏幕坐标起始点开始显示
 //-------------------------------------------------------------------------------------------------------------------
 #define tft180_displayimage8660(p, width, height)       (tft180_show_rgb565_image(0, 0, (p), SCC8660_W, SCC8660_H, (width), (height), 1))
-
-//===================================================TFT180 扩展函数==================================================
+//=================================================声明 TFT180 扩展函数================================================
 
 
 #endif

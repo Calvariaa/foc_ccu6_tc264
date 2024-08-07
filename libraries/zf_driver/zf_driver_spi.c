@@ -24,13 +24,14 @@
 * 文件名称          zf_driver_spi
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            修复多个SPI同时使用可能产生冲突的问题
 ********************************************************************************************************************/
 
 #include "IFXQSPI_REGDEF.h"
@@ -42,7 +43,7 @@
 #include "zf_driver_spi.h"
 
 #define MAX_BAUD    50000000
-Ifx_QSPI_BACON      bacon;
+Ifx_QSPI_BACON      bacon[4];
 spi_cs_pin_enum     spi_cs_pin;
 
 void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum mosi_pin, spi_miso_pin_enum miso_pin, spi_cs_pin_enum cs_pin, IfxQspi_SpiMaster_Pins *set_pin, IfxQspi_SpiMaster_Output *set_cs)
@@ -70,8 +71,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             if      (SPI0_MISO_P20_12 == miso_pin)  set_pin->mrst = &IfxQspi0_MRSTA_P20_12_IN;
             else    zf_assert(FALSE);
 
-            if      (SPI0_CS0_P20_8   == cs_pin ||
-                          SPI_CS_NULL == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO0_P20_8_OUT;
+            if      (SPI0_CS0_P20_8   == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO0_P20_8_OUT;
             else if (SPI0_CS1_P20_9   == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO1_P20_9_OUT;
             else if (SPI0_CS2_P20_13  == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO2_P20_13_OUT;
             else if (SPI0_CS3_P11_10  == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO3_P11_10_OUT;
@@ -82,6 +82,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI0_CS8_P20_6   == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO8_P20_6_OUT;
             else if (SPI0_CS9_P20_3   == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO9_P20_3_OUT;
             else if (SPI0_CS13_P15_0  == cs_pin)    set_cs->pin   = &IfxQspi0_SLSO13_P15_0_OUT;
+            else if (SPI_CS_NULL      == cs_pin)    set_cs->pin   = NULL_PTR;
             else    zf_assert(FALSE);
 
         }break;
@@ -101,8 +102,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI1_MISO_P11_3  == miso_pin)  set_pin->mrst = &IfxQspi1_MRSTB_P11_3_IN;
             else    zf_assert(FALSE);
 
-            if      (SPI1_CS0_P20_8   == cs_pin  ||
-                         SPI_CS_NULL  == cs_pin)    set_cs->pin   = &IfxQspi1_SLSO0_P20_8_OUT;
+            if      (SPI1_CS0_P20_8   == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO0_P20_8_OUT;
             else if (SPI1_CS1_P20_9   == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO1_P20_9_OUT;
             else if (SPI1_CS2_P20_13  == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO2_P20_13_OUT;
             else if (SPI1_CS3_P11_10  == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO3_P11_10_OUT;
@@ -112,6 +112,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI1_CS7_P33_5   == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO7_P33_5_OUT;
             else if (SPI1_CS8_P10_4   == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO8_P10_4_OUT;
             else if (SPI1_CS9_P10_5   == cs_pin )   set_cs->pin   = &IfxQspi1_SLSO9_P10_5_OUT;
+            else if (SPI_CS_NULL      == cs_pin)    set_cs->pin   = NULL_PTR;
             else    zf_assert(FALSE);
         }break;
 
@@ -136,8 +137,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI2_MISO_P21_3  == miso_pin)  set_pin->mrst = &IfxQspi2_MRSTCP_P21_3_IN;
             else    zf_assert(FALSE);
 
-            if      (SPI2_CS0_P15_2   == cs_pin ||
-                          SPI_CS_NULL == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO0_P15_2_OUT;
+            if      (SPI2_CS0_P15_2   == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO0_P15_2_OUT;
             else if (SPI2_CS1_P14_2   == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO1_P14_2_OUT;
             else if (SPI2_CS2_P14_6   == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO2_P14_6_OUT;
             else if (SPI2_CS3_P14_3   == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO3_P14_3_OUT;
@@ -146,6 +146,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI2_CS7_P20_10  == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO7_P20_10_OUT;
             else if (SPI2_CS8_P20_6   == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO8_P20_6_OUT;
             else if (SPI2_CS9_P20_3   == cs_pin)    set_cs->pin   = &IfxQspi2_SLSO9_P20_3_OUT;
+            else if (SPI_CS_NULL      == cs_pin)    set_cs->pin   = NULL_PTR;
             else    zf_assert(FALSE);
         }break;
 
@@ -172,8 +173,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI3_MISO_P33_13 == miso_pin)  set_pin->mrst = &IfxQspi3_MRSTD_P33_13_IN;
             else    zf_assert(FALSE);
 
-            if      (SPI3_CS0_P02_4   == cs_pin ||
-                          SPI_CS_NULL == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO0_P02_4_OUT;
+            if      (SPI3_CS0_P02_4   == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO0_P02_4_OUT;
             else if (SPI3_CS1_P02_0   == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO1_P02_0_OUT;
             else if (SPI3_CS1_P33_9   == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO1_P33_9_OUT;
             else if (SPI3_CS2_P02_1   == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO2_P02_1_OUT;
@@ -188,6 +188,7 @@ void spi_mux (spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_enum 
             else if (SPI3_CS11_P33_10 == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO11_P33_10_OUT;
             else if (SPI3_CS12_P22_2  == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO12_P22_2_OUT;
             else if (SPI3_CS13_P23_1  == cs_pin)    set_cs->pin   = &IfxQspi3_SLSO13_P23_1_OUT;
+            else if (SPI_CS_NULL      == cs_pin)    set_cs->pin   = NULL_PTR;
             else    zf_assert(FALSE);
         }break;
     }
@@ -226,7 +227,7 @@ void spi_write_8bit (spi_index_enum spi_n, const uint8 data)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, data);                    // 将发送的数据写入缓冲区
 
@@ -252,13 +253,13 @@ void spi_write_8bit_array (spi_index_enum spi_n, const uint8 *data, uint32 len)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);// 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);// 发送数据后CS继续保持为低
 
     do
     {
         if(len == 1)
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, *data ++);                    // 将发送的数据写入缓冲区
@@ -285,13 +286,13 @@ void spi_write_16bit (spi_index_enum spi_n, const uint16 data)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);// 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);// 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)((data & 0xFF00) >> 8)); // 将发送的数据写入缓冲区
 
     while(moudle->STATUS.B.TXFIFOLEVEL != 0);                   // 等待发送完毕
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)(data & 0x00FF));  // 将发送的数据写入缓冲区
 
@@ -316,7 +317,7 @@ void spi_write_16bit_array (spi_index_enum spi_n, const uint16 *data, uint32 len
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);              // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     do
     {
@@ -327,7 +328,7 @@ void spi_write_16bit_array (spi_index_enum spi_n, const uint16 *data, uint32 len
 
         if(len == 1)                                                // 最后一个数据
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);      // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);      // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, (uint8)(*data++ & 0x00FF));       // 将发送的数据写入缓冲区
@@ -356,7 +357,7 @@ void spi_write_8bit_register (spi_index_enum spi_n, const uint8 register_name, c
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
@@ -364,7 +365,7 @@ void spi_write_8bit_register (spi_index_enum spi_n, const uint8 register_name, c
 
     while(moudle->STATUS.B.TXFIFOLEVEL != 0);                   // 等待发送完毕
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, data);                    // 将发送的数据写入缓冲区
 
@@ -391,7 +392,7 @@ void spi_write_8bit_registers (spi_index_enum spi_n, const uint8 register_name, 
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);        // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);        // 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, register_name);           // 将发送的数据写入缓冲区
 
@@ -401,7 +402,7 @@ void spi_write_8bit_registers (spi_index_enum spi_n, const uint8 register_name, 
     {
         if(len == 1)                                            // 最后一个数据
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, *data ++);            // 将发送的数据写入缓冲区
@@ -430,7 +431,7 @@ void spi_write_16bit_register (spi_index_enum spi_n, const uint16 register_name,
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);// 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);// 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)((register_name & 0xFF00) >> 8));  // 将发送的数据写入缓冲区
 
@@ -444,7 +445,7 @@ void spi_write_16bit_register (spi_index_enum spi_n, const uint16 register_name,
 
     while(moudle->STATUS.B.TXFIFOLEVEL != 0);                   // 等待发送完毕
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)(data & 0x00FF));  // 将发送的数据写入缓冲区
 
@@ -471,7 +472,7 @@ void spi_write_16bit_registers (spi_index_enum spi_n, const uint16 register_name
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);// 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);// 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)((register_name & 0xFF00) >> 8));  // 将发送的数据写入缓冲区
 
@@ -489,7 +490,7 @@ void spi_write_16bit_registers (spi_index_enum spi_n, const uint16 register_name
 
         if(len == 1)                                            // 最后一个数据
         {
-           IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);           // 发送数据后CS拉高
+           IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);           // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, (uint8)(*data ++ & 0x00FF));          // 将发送的数据写入缓冲区
@@ -517,7 +518,7 @@ uint8 spi_read_8bit (spi_index_enum spi_n)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
 
     spi_clear_fifo(moudle);                                     // 清除接收缓存区
 
@@ -547,7 +548,7 @@ void spi_read_8bit_array (spi_index_enum spi_n, uint8 *data, uint32 len)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);// 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);// 发送数据后CS继续保持为低
 
     spi_clear_fifo(moudle);                                     // 清除接收缓存区
 
@@ -555,7 +556,7 @@ void spi_read_8bit_array (spi_index_enum spi_n, uint8 *data, uint32 len)
     {
         if(len == 1)                                            // 最后一个数据
         {
-           IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);           // 发送数据后CS拉高
+           IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);           // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, 0);                   // 将发送的数据写入缓冲区
@@ -586,7 +587,7 @@ uint16 spi_read_16bit (spi_index_enum spi_n)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);          // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);// 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);// 发送数据后CS继续保持为低
 
     spi_clear_fifo(moudle);                                     // 清除接收缓存区
 
@@ -596,7 +597,7 @@ uint16 spi_read_16bit (spi_index_enum spi_n)
 
     data = (uint16)IfxQspi_readReceiveFifo(moudle);             // 保存接收到的数据
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);  // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);  // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, 0);                       // 将发送的数据写入缓冲区
 
@@ -626,7 +627,7 @@ void spi_read_16bit_array (spi_index_enum spi_n, uint16 *data, uint32 len)
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);              // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
@@ -640,7 +641,7 @@ void spi_read_16bit_array (spi_index_enum spi_n, uint16 *data, uint32 len)
 
         if(len == 1)
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);              // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);              // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, 0);                       // 将发送的数据写入缓冲区
@@ -675,7 +676,7 @@ uint8 spi_read_8bit_register (spi_index_enum spi_n, const uint8 register_name)
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, register_name);               // 将发送的数据写入缓冲区
 
@@ -683,7 +684,7 @@ uint8 spi_read_8bit_register (spi_index_enum spi_n, const uint8 register_name)
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);      // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);      // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, 0);                           // 将发送的数据写入缓冲区
 
@@ -714,7 +715,7 @@ void spi_read_8bit_registers (spi_index_enum spi_n, const uint8 register_name, u
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, register_name);               // 将发送的数据写入缓冲区
 
@@ -726,7 +727,7 @@ void spi_read_8bit_registers (spi_index_enum spi_n, const uint8 register_name, u
     {
         if(len == 1)
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);              // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);              // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, 0);                       // 将发送的数据写入缓冲区
@@ -761,7 +762,7 @@ uint16 spi_read_16bit_register (spi_index_enum spi_n, const uint16 register_name
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)((register_name & 0xFF00) >> 8));      // 将发送的数据写入缓冲区
 
@@ -779,7 +780,7 @@ uint16 spi_read_16bit_register (spi_index_enum spi_n, const uint16 register_name
 
     data |= (uint8)IfxQspi_readReceiveFifo(moudle);                 // 保存接收到的数据
 
-    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);      // 发送数据后CS拉高
+    IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);      // 发送数据后CS拉高
 
     IfxQspi_writeTransmitFifo(moudle, 0);                           // 将发送的数据写入缓冲区
 
@@ -813,7 +814,7 @@ void spi_read_16bit_registers (spi_index_enum spi_n, const uint16 register_name,
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     IfxQspi_writeTransmitFifo(moudle, (uint8)((register_name & 0xFF00) >> 8));      // 将发送的数据写入缓冲区
 
@@ -835,7 +836,7 @@ void spi_read_16bit_registers (spi_index_enum spi_n, const uint16 register_name,
 
         if(len == 1)
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);              // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);              // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, 0);                       // 将发送的数据写入缓冲区
@@ -868,7 +869,7 @@ void spi_transfer_8bit (spi_index_enum spi_n, const uint8 *write_buffer, uint8 *
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);              // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
@@ -876,7 +877,7 @@ void spi_transfer_8bit (spi_index_enum spi_n, const uint8 *write_buffer, uint8 *
     {
         if(len == 1)
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);              // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);              // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, *write_buffer ++);                        // 将发送的数据写入缓冲区
@@ -913,13 +914,13 @@ void spi_transfer_16bit (spi_index_enum spi_n, const uint16 *write_buffer, uint1
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);              // 获取模块地址
 
-    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon.U);    // 发送数据后CS继续保持为低
+    IfxQspi_writeBasicConfigurationBeginStream(moudle, bacon[spi_n].U);    // 发送数据后CS继续保持为低
 
     spi_clear_fifo(moudle);                                         // 清除接收缓存区
 
     do
     {
-        IfxQspi_writeTransmitFifo(moudle, (uint8)(*write_buffer & 0xFF00) >> 8);        // 将发送的数据写入缓冲区
+        IfxQspi_writeTransmitFifo(moudle, (uint8)((*write_buffer & 0xFF00) >> 8));        // 将发送的数据写入缓冲区
 
         if(read_buffer != NULL)
         {
@@ -933,7 +934,7 @@ void spi_transfer_16bit (spi_index_enum spi_n, const uint16 *write_buffer, uint1
 
         if(len == 1)
         {
-            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon.U);                  // 发送数据后CS拉高
+            IfxQspi_writeBasicConfigurationEndStream(moudle, bacon[spi_n].U);                  // 发送数据后CS拉高
         }
 
         IfxQspi_writeTransmitFifo(moudle, (uint8)(*write_buffer & 0x00FF));             // 将发送的数据写入缓冲区
@@ -977,6 +978,7 @@ void spi_init (spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_sck_pi
     IfxQspi_SpiMaster_Channel MasterChHandle;
     IfxQspi_SpiMaster_Pins MasterPins;
     IfxQspi_SpiMaster_Output SlsoPin;
+    IfxQspi_SpiMaster_ChannelConfig MasterChConfig;
     volatile Ifx_QSPI *moudle;
 
     // 检查引脚是否正确
@@ -999,13 +1001,9 @@ void spi_init (spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_sck_pi
     MasterConfig.base.maximumBaudrate   = MAX_BAUD;
     MasterConfig.base.isrProvider       = IfxSrc_Tos_cpu0;
 
-
     MasterConfig.pins = &MasterPins;
     IfxQspi_SpiMaster_initModule(&MasterHandle, &MasterConfig);
-
-    IfxQspi_SpiMaster_ChannelConfig MasterChConfig;
     IfxQspi_SpiMaster_initChannelConfig(&MasterChConfig, &MasterHandle);
-
 
     MasterChConfig.base.baudrate = (float)baud;
     switch(mode)
@@ -1032,39 +1030,45 @@ void spi_init (spi_index_enum spi_n, spi_mode_enum mode, uint32 baud, spi_sck_pi
         }break;
     }
 
-    MasterChConfig.base.mode.dataHeading = SpiIf_DataHeading_msbFirst;
-    MasterChConfig.base.mode.dataWidth   = 8;
-
-    MasterChConfig.base.mode.csActiveLevel = Ifx_ActiveState_low;
-    MasterChConfig.sls.output = SlsoPin;
+    MasterChConfig.base.mode.dataHeading    = SpiIf_DataHeading_msbFirst;
+    MasterChConfig.base.mode.dataWidth      = 8;
+    MasterChConfig.base.mode.csActiveLevel  = Ifx_ActiveState_low;
+    MasterChConfig.sls.output               = SlsoPin;
+    if(SPI_CS_NULL == cs_pin)
+    {
+        MasterChConfig.base.mode.loopback   = 1;
+    }
     IfxQspi_SpiMaster_initChannel(&MasterChHandle, &MasterChConfig);
 
     if(SPI_CS_NULL == cs_pin)
     {
+        IfxQspi_SpiMaster *handle   = MasterChConfig.base.driver->driver;
+        Ifx_QSPI          *qspiSFR  = handle->qspi;
+        qspiSFR->GLOBALCON.B.LB     = 0;
         IfxQspi_setSlaveSelectOutputControl(moudle, IfxQspi_ChannelId_0, FALSE, FALSE);
-        spi_cs_pin      = SPI_CS_NULL;
+        spi_cs_pin                  = SPI_CS_NULL;
         switch(spi_n)
         {
-            case SPI_0: cs_pin = SPI0_CS0_P20_8; break;
-            case SPI_1: cs_pin = SPI1_CS0_P20_8; break;
-            case SPI_2: cs_pin = SPI2_CS0_P15_2; break;
-            case SPI_3: cs_pin = SPI3_CS0_P02_4; break;
+            case SPI_0: cs_pin      = SPI0_CS0_P20_8; break;
+            case SPI_1: cs_pin      = SPI1_CS0_P20_8; break;
+            case SPI_2: cs_pin      = SPI2_CS0_P15_2; break;
+            case SPI_3: cs_pin      = SPI3_CS0_P02_4; break;
         }
     }
 
     IfxQspi_configPT1Event(moudle, IfxQspi_PhaseTransitionEvent_endOfFrame);
 
-    bacon.U = moudle->BACON.U;
-    bacon.B.DL      = 7;        // Data Length
-    bacon.B.IDLE    = 1;        // Idle Delay Length
-    bacon.B.IPRE    = 1;        // Prescaler for the Idle Delay
-    bacon.B.LEAD    = 1;        // Leading Delay Length
-    bacon.B.LPRE    = 1;        // Prescaler for the Leading Delay
-    bacon.B.MSB     = 1;        // Shift MSB or LSB First
-    bacon.B.PARTYP  = 0;        // Parity Type
-    bacon.B.BYTE    = 0;        // Byte
-    bacon.B.TRAIL   = 1;        // Trailing Delay Length
-    bacon.B.TPRE    = 1;        // Prescaler for the Trailing Delay
-    bacon.B.CS      = cs_pin%102/6-3;
+    bacon[spi_n].U = moudle->BACON.U;
+    bacon[spi_n].B.DL      = 7;        // Data Length
+    bacon[spi_n].B.IDLE    = 1;        // Idle Delay Length
+    bacon[spi_n].B.IPRE    = 1;        // Prescaler for the Idle Delay
+    bacon[spi_n].B.LEAD    = 1;        // Leading Delay Length
+    bacon[spi_n].B.LPRE    = 1;        // Prescaler for the Leading Delay
+    bacon[spi_n].B.MSB     = 1;        // Shift MSB or LSB First
+    bacon[spi_n].B.PARTYP  = 0;        // Parity Type
+    bacon[spi_n].B.BYTE    = 0;        // Byte
+    bacon[spi_n].B.TRAIL   = 1;        // Trailing Delay Length
+    bacon[spi_n].B.TPRE    = 1;        // Prescaler for the Trailing Delay
+    bacon[spi_n].B.CS      = cs_pin%102/6-3;
 }
 

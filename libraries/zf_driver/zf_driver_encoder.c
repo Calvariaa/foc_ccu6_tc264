@@ -24,7 +24,7 @@
 * 文件名称          zf_driver_encoder
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -36,6 +36,8 @@
 #include "IfxGpt12_IncrEnc.h"
 #include "zf_common_debug.h"
 #include "zf_driver_encoder.h"
+
+static uint8 encoder_mode[TIM6_ENCODER + 1] = {0};
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     编码器地址设置 内部调用
@@ -131,6 +133,12 @@ int16 encoder_get_count (encoder_index_enum encoder_n)
         case TIM6_ENCODER: encoder_data = (int16)IfxGpt12_T6_getTimerValue(&MODULE_GPT120); break;
         default: encoder_data = 0;
     }
+
+    if(0 == encoder_mode[encoder_n])
+    {
+        encoder_data = encoder_data / 4;
+    }
+
     return encoder_data;
 }
 //-------------------------------------------------------------------------------------------------------------------
@@ -161,7 +169,71 @@ void encoder_clear_count (encoder_index_enum encoder_n)
 //  使用示例      encoder_quad_init(TIM2_ENCODER, TIM2_ENCODER_CH1_P00_7, TIM2_ENCODER_CH2_P00_8);// 使用T2定时器   P00_7引脚为A通道    P00_8引脚为B通道
 //  备注信息
 //-------------------------------------------------------------------------------------------------------------------
-void encoder_quad_init (encoder_index_enum encoder_n, encoder_channel1_enum count_pin, encoder_channel2_enum dir_pin)
+void encoder_quad_init (encoder_index_enum encoder_n, encoder_channel1_enum ch1_pin, encoder_channel2_enum ch2_pin)
+{
+    zf_assert(encoder_n <= TIM4_ENCODER);    // 完全正交采集仅 TIM2 TIM3 TIM4支持 如果在这里报错 可以尝试使用下面的方向初始化encoder_dir_init
+
+    IfxGpt12_enableModule(&MODULE_GPT120);
+    IfxGpt12_setGpt1BlockPrescaler(&MODULE_GPT120, IfxGpt12_Gpt1BlockPrescaler_4);
+    IfxGpt12_setGpt2BlockPrescaler(&MODULE_GPT120, IfxGpt12_Gpt2BlockPrescaler_4);
+    encoder_mapping_set(encoder_n, ch1_pin, ch2_pin);
+
+    switch(encoder_n)
+    {
+        case TIM2_ENCODER:
+        {
+            IfxGpt12_T2_setCounterInputMode(&MODULE_GPT120, IfxGpt12_IncrementalInterfaceInputMode_bothEdgesTxINOrTxEUD);
+            IfxGpt12_T2_setDirectionSource (&MODULE_GPT120, IfxGpt12_TimerDirectionSource_external);
+            IfxGpt12_T2_setMode            (&MODULE_GPT120, IfxGpt12_Mode_incrementalInterfaceEdgeDetection);
+            IfxGpt12_T2_run                (&MODULE_GPT120, IfxGpt12_TimerRun_start);
+        }break;
+
+        case TIM3_ENCODER:
+        {
+            IfxGpt12_T3_setCounterInputMode(&MODULE_GPT120, IfxGpt12_IncrementalInterfaceInputMode_bothEdgesTxINOrTxEUD);
+            IfxGpt12_T3_setDirectionSource (&MODULE_GPT120, IfxGpt12_TimerDirectionSource_external);
+            IfxGpt12_T3_setMode            (&MODULE_GPT120, IfxGpt12_Mode_incrementalInterfaceEdgeDetection);
+            IfxGpt12_T3_run                (&MODULE_GPT120, IfxGpt12_TimerRun_start);
+        }break;
+
+        case TIM4_ENCODER:
+        {
+            IfxGpt12_T4_setCounterInputMode(&MODULE_GPT120, IfxGpt12_IncrementalInterfaceInputMode_bothEdgesTxINOrTxEUD);
+            IfxGpt12_T4_setDirectionSource (&MODULE_GPT120, IfxGpt12_TimerDirectionSource_external);
+            IfxGpt12_T4_setMode            (&MODULE_GPT120, IfxGpt12_Mode_incrementalInterfaceEdgeDetection);
+            IfxGpt12_T4_run                (&MODULE_GPT120, IfxGpt12_TimerRun_start);
+        }break;
+
+        case TIM5_ENCODER:
+        {
+            IfxGpt12_T5_setCounterInputMode(&MODULE_GPT120, IfxGpt12_IncrementalInterfaceInputMode_bothEdgesTxINOrTxEUD);
+            IfxGpt12_T5_setDirectionSource (&MODULE_GPT120, IfxGpt12_TimerDirectionSource_external);
+            IfxGpt12_T5_setMode            (&MODULE_GPT120, IfxGpt12_Mode_incrementalInterfaceEdgeDetection);
+            IfxGpt12_T5_run                (&MODULE_GPT120, IfxGpt12_TimerRun_start);
+        }break;
+
+        case TIM6_ENCODER:
+        {
+            IfxGpt12_T6_setCounterInputMode(&MODULE_GPT120, IfxGpt12_IncrementalInterfaceInputMode_bothEdgesTxINOrTxEUD);
+            IfxGpt12_T6_setDirectionSource (&MODULE_GPT120, IfxGpt12_TimerDirectionSource_external);
+            IfxGpt12_T6_setMode            (&MODULE_GPT120, IfxGpt12_Mode_incrementalInterfaceEdgeDetection);
+            IfxGpt12_T6_run                (&MODULE_GPT120, IfxGpt12_TimerRun_start);
+        }break;
+    }
+
+    encoder_mode[encoder_n] = 0;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+//  函数简介      方向编码器采集初始化
+//  参数说明      encoder_n       选择所使用的GPT12定时器
+//  参数说明      ch1_pin         设置计数引脚
+//  参数说明      ch2_pin         设置方向引脚
+//  返回参数      void
+//  使用示例      encoder_quad_init(TIM2_ENCODER, TIM2_ENCODER_CH1_P00_7, TIM2_ENCODER_CH2_P00_8);// 使用T2定时器   P00_7引脚进行计数    计数方向使用P00_8引脚
+//  备注信息      英飞凌系列单片机无需区分正交和方向编码器，此处仅保留接口方便用户使用
+//-------------------------------------------------------------------------------------------------------------------
+void encoder_dir_init (encoder_index_enum encoder_n, encoder_channel1_enum count_pin, encoder_channel2_enum dir_pin)
 {
     IfxGpt12_enableModule(&MODULE_GPT120);
     IfxGpt12_setGpt1BlockPrescaler(&MODULE_GPT120, IfxGpt12_Gpt1BlockPrescaler_4);
@@ -210,19 +282,7 @@ void encoder_quad_init (encoder_index_enum encoder_n, encoder_channel1_enum coun
             IfxGpt12_T6_run                (&MODULE_GPT120, IfxGpt12_TimerRun_start);
         }break;
     }
-}
 
-//-------------------------------------------------------------------------------------------------------------------
-//  函数简介      方向编码器采集初始化
-//  参数说明      encoder_n       选择所使用的GPT12定时器
-//  参数说明      ch1_pin         设置计数引脚
-//  参数说明      ch2_pin         设置方向引脚
-//  返回参数      void
-//  使用示例      encoder_quad_init(TIM2_ENCODER, TIM2_ENCODER_CH1_P00_7, TIM2_ENCODER_CH2_P00_8);// 使用T2定时器   P00_7引脚进行计数    计数方向使用P00_8引脚
-//  备注信息      英飞凌系列单片机无需区分正交和方向编码器，此处仅保留接口方便用户使用
-//-------------------------------------------------------------------------------------------------------------------
-void encoder_dir_init (encoder_index_enum encoder_n, encoder_channel1_enum ch1_pin, encoder_channel2_enum ch2_pin)
-{
-    encoder_quad_init(encoder_n, ch1_pin, ch2_pin);
+    encoder_mode[encoder_n] = 1;
 }
 

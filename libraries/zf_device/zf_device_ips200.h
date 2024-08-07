@@ -24,13 +24,14 @@
 * 文件名称          zf_device_ips200
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /********************************************************************************************************************
 * 接线定义：
@@ -65,6 +66,7 @@
 
 #include "zf_common_typedef.h"
 
+//==================================================定义 IPS200 基本配置================================================
 #define IPS200_USE_SOFT_SPI             (0 )                                    // 默认使用硬件 SPI 方式驱动 建议使用硬件 SPI 方式驱动
 #if IPS200_USE_SOFT_SPI                                                         // 这两段 颜色正常的才是正确的 颜色灰的就是没有用的
 //====================================================软件 SPI 驱动====================================================
@@ -84,49 +86,44 @@
 //====================================================硬件 SPI 驱动====================================================
 #endif
 // 如果使用的是单排排针的两寸屏幕 SPI 驱动控制引脚 可以修改
-#define IPS200_RST_PIN_SPI              (P15_1)                                 // 液晶复位引脚定义
-#define IPS200_DC_PIN_SPI               (P15_0)                                 // 液晶命令位引脚定义
-#define IPS200_CS_PIN_SPI               (P15_2)
-#define IPS200_BLk_PIN_SPI              (P15_4)
+#define IPS200_RST_PIN_SPI              (P15_1)                                 // 单排针(SPI)液晶复位引脚定义
+#define IPS200_DC_PIN_SPI               (P15_0)                                 // 单排针(SPI)液晶命令位引脚定义
+#define IPS200_CS_PIN_SPI               (P15_2)                                 // 单排针(SPI)液晶片选引脚定义
+#define IPS200_BLk_PIN_SPI              (P15_4)                                 // 单排针(SPI)液晶背光引脚定义
 
 // 如果使用的是双排排针的两寸屏幕 并口驱动控制引脚 可以修改
-#define IPS200_RST_PIN_PARALLEL8        (P15_0)
-#define IPS200_BL_PIN_PARALLEL8         (P15_4)
-
-//如果使用的是双排排针的两寸屏幕 并口驱动控制引脚 可以修改
-#define IPS200_RD_PIN_PARALLEL8         (P15_3)
-#define IPS200_WR_PIN_PARALLEL8         (P15_5)
-#define IPS200_RS_PIN_PARALLEL8         (P15_1)
-#define IPS200_CS_PIN_PARALLEL8         (P15_2)
-
+#define IPS200_RD_PIN_PARALLEL8         (P15_3)                                 // 双排针(并口)液晶读取位引脚定义
+#define IPS200_WR_PIN_PARALLEL8         (P15_5)                                 // 双排针(并口)液晶写入位引脚定义
+#define IPS200_RST_PIN_PARALLEL8        (P15_0)                                 // 双排针(并口)液晶复位引脚定义
+#define IPS200_RS_PIN_PARALLEL8         (P15_1)                                 // 双排针(并口)液晶命令位引脚定义
+#define IPS200_CS_PIN_PARALLEL8         (P15_2)                                 // 双排针(并口)液晶片选引脚定义
+#define IPS200_BL_PIN_PARALLEL8         (P15_4)                                 // 双排针(并口)液晶背光引脚定义
 //并口驱动数据引脚 可以修改 如果你的屏幕是双排排针 这里的引脚用得到
 //D0-D3四个数据引脚必须连续 例如C0-C3,C1-C4等等，
 //D4-D7四个数据引脚必须连续 例如B0-B3,B1-B4等等。
 //可以连接到不同端口的意思就是屏幕的D0-D3与C1-C4连接，D4-D7与B2-B5连接。
 //切换引脚后注意修改IPS200_DATA_PORT1和IPS200_DATA_PORT2宏定义
-#define IPS200_D0_PIN_PARALLEL8         (P11_9 )
-#define IPS200_D1_PIN_PARALLEL8         (P11_10)
-#define IPS200_D2_PIN_PARALLEL8         (P11_11)
-#define IPS200_D3_PIN_PARALLEL8         (P11_12)
-#define IPS200_D4_PIN_PARALLEL8         (P13_0 )
-#define IPS200_D5_PIN_PARALLEL8         (P13_1 )
-#define IPS200_D6_PIN_PARALLEL8         (P13_2 )
-#define IPS200_D7_PIN_PARALLEL8         (P13_3 )
+#define IPS200_D0_PIN_PARALLEL8         (P11_9 )                                // 双排针(并口)液晶数据引脚D0
+#define IPS200_D1_PIN_PARALLEL8         (P11_10)                                // 双排针(并口)液晶数据引脚D1
+#define IPS200_D2_PIN_PARALLEL8         (P11_11)                                // 双排针(并口)液晶数据引脚D2
+#define IPS200_D3_PIN_PARALLEL8         (P11_12)                                // 双排针(并口)液晶数据引脚D3
+#define IPS200_D4_PIN_PARALLEL8         (P13_0 )                                // 双排针(并口)液晶数据引脚D4
+#define IPS200_D5_PIN_PARALLEL8         (P13_1 )                                // 双排针(并口)液晶数据引脚D5
+#define IPS200_D6_PIN_PARALLEL8         (P13_2 )                                // 双排针(并口)液晶数据引脚D6
+#define IPS200_D7_PIN_PARALLEL8         (P13_3 )                                // 双排针(并口)液晶数据引脚D7
 
 #define IPS200_DEFAULT_DISPLAY_DIR      (IPS200_PORTAIT)                        // 默认的显示方向
 #define IPS200_DEFAULT_PENCOLOR         (RGB565_RED    )                        // 默认的画笔颜色
 #define IPS200_DEFAULT_BGCOLOR          (RGB565_WHITE  )                        // 默认的背景颜色
 #define IPS200_DEFAULT_DISPLAY_FONT     (IPS200_8X16_FONT)                      // 默认的字体模式
 
-//定义数据端口所在PORT，切换引脚后务必根据引脚所在PORT进行更改
+//定义数据端口所在PORT，切换引脚后务必根据引脚所在PORT进行更改   这里使用了两组端口进行组合  因此定义了两个引脚起始编号
 #define IPS200_DATA_PORT1               (3)       //0：P00端口  1：P02端口  2：P10端口  3：P11端口  4：P13端口  5：P14端口  6：P15端口  7：P20端口  8：P21端口  9：P22端口  10：P23端口  11：P32端口  12：P33端口
 #define IPS200_DATAPORT1                (get_port_out_addr(IPS200_DATA_PORT1))
-#define DATA_START_NUM1                 (IPS200_D0_PIN_PARALLEL8&0x1f)          // 宏定义数据引脚的起始编号
-
-
+#define DATA_START_NUM1                 (IPS200_D0_PIN_PARALLEL8&0x1f)          // 定义数据引脚的起始编号
 #define IPS200_DATA_PORT2               (4)       //0：P00端口  1：P02端口  2：P10端口  3：P11端口  4：P13端口  5：P14端口  6：P15端口  7：P20端口  8：P21端口  9：P22端口  10：P23端口  11：P32端口  12：P33端口
 #define IPS200_DATAPORT2                (get_port_out_addr(IPS200_DATA_PORT2))
-#define DATA_START_NUM2                 (IPS200_D4_PIN_PARALLEL8&0x1f)          //宏定义数据引脚的起始编号
+#define DATA_START_NUM2                 (IPS200_D4_PIN_PARALLEL8&0x1f)          // 定义数据引脚的起始编号
 
 // 控制语句
 #define IPS200_RD(x)                    ((x) ? (gpio_high(IPS200_RD_PIN_PARALLEL8)) : (gpio_low(IPS200_RD_PIN_PARALLEL8)))
@@ -136,8 +133,10 @@
 #define IPS200_RS(x)                    ((x) ? (gpio_high(IPS200_RS_PIN_PARALLEL8)) : (gpio_low(IPS200_RS_PIN_PARALLEL8)))
 #define IPS200_DC(x)                    ((x) ? (gpio_high(IPS200_DC_PIN_SPI))       : (gpio_low(IPS200_DC_PIN_SPI)))
 #define IPS200_CS(x)                    ((x) ? (gpio_high(IPS200_CS_PIN_SPI))       : (gpio_low(IPS200_CS_PIN_SPI)))
+//==================================================定义 IPS200 基本配置================================================
 
-//=================================================定义 IPS200 参数结构体===============================================
+
+//==================================================定义 IPS200 参数结构体===============================================
 typedef enum
 {
     IPS200_TYPE_SPI,                                                            // SPI 驱动
@@ -158,36 +157,39 @@ typedef enum
     IPS200_8X16_FONT                    = 1,                                    // 8x16     字体
     IPS200_16X16_FONT                   = 2,                                    // 16x16    字体 目前不支持
 }ips200_font_size_enum;
-//=================================================定义 IPS200 参数结构体===============================================
 
-//===================================================IPS200 基础函数==================================================
-void    ips200_clear                    (void);
-void    ips200_full                     (const uint16 color);
-void    ips200_set_dir                  (ips200_dir_enum dir);
-void    ips200_set_font                 (ips200_font_size_enum font);
-void    ips200_set_color                (const uint16 pen, const uint16 bgcolor);
-void    ips200_draw_point               (uint16 x, uint16 y, const uint16 color);
-void    ips200_draw_line                (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_end, const uint16 color);
+extern  uint16  ips200_width_max;
+extern  uint16  ips200_height_max;
+
+//==================================================定义 IPS200 参数结构体===============================================
+
+//==================================================声明 IPS200 基础函数================================================
+void    ips200_clear                    (void);                                                                                // IPS200 清屏函数
+void    ips200_full                     (const uint16 color);                                                                  // IPS200 屏幕填充函数
+void    ips200_set_dir                  (ips200_dir_enum dir);                                                                 // IPS200 设置显示方向
+void    ips200_set_font                 (ips200_font_size_enum font);                                                          // IPS200 设置显示字体
+void    ips200_set_color                (const uint16 pen, const uint16 bgcolor);                                              // IPS200 设置显示颜色
+void    ips200_draw_point               (uint16 x, uint16 y, const uint16 color);                                              // IPS200 画点函数
+void    ips200_draw_line                (uint16 x_start, uint16 y_start, uint16 x_end, uint16 y_end, const uint16 color);      // IPS200 画线函数
 
 void    ips200_show_char                (uint16 x, uint16 y, const char dat);
 void    ips200_show_string              (uint16 x, uint16 y, const char dat[]);
 void    ips200_show_int                 (uint16 x, uint16 y, const int32 dat, uint8 num);
 void    ips200_show_uint                (uint16 x, uint16 y, const uint32 dat, uint8 num);
-void    ips200_show_float               (uint16 x, uint16 y, const float dat, uint8 num, uint8 pointnum);
+void    ips200_show_float               (uint16 x, uint16 y, const double dat, uint8 num, uint8 pointnum);
 
-void    ips200_show_binary_image        (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height);
-void    ips200_show_gray_image          (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 threshold);
-void    ips200_show_rgb565_image        (uint16 x, uint16 y, const uint16 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 color_mode);
+void    ips200_show_binary_image        (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height);                      // IPS200 显示二值图像 数据每八个点组成一个字节数据
+void    ips200_show_gray_image          (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 threshold);     // IPS200 显示 8bit 灰度图像 带二值化阈值
+void    ips200_show_rgb565_image        (uint16 x, uint16 y, const uint16 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 color_mode);   // IPS200 显示 RGB565 彩色图像
 
-void    ips200_show_wave                (uint16 x, uint16 y, const uint16 *wave, uint16 width, uint16 value_max, uint16 dis_width, uint16 dis_value_max);
-void    ips200_show_chinese             (uint16 x, uint16 y, uint8 size, const uint8 *chinese_buffer, uint8 number, const uint16 color);
+void    ips200_show_wave                (uint16 x, uint16 y, const uint16 *wave, uint16 width, uint16 value_max, uint16 dis_width, uint16 dis_value_max);                // IPS200 显示波形
+void    ips200_show_chinese             (uint16 x, uint16 y, uint8 size, const uint8 *chinese_buffer, uint8 number, const uint16 color);                                 // IPS200 汉字显示
 
-void    ips200_init                     (ips200_type_enum type_select);
-//===================================================IPS200 基础函数==================================================
+void    ips200_init                     (ips200_type_enum type_select);                                                         // 2寸 IPS液晶初始化
+//==================================================声明 IPS200 基础函数================================================
 
 
-//===================================================IPS200 扩展函数==================================================
-
+//==================================================声明 IPS200 扩展函数================================================
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     IPS200 显示小钻风图像
 // 参数说明     p               图像数组指针
@@ -214,13 +216,11 @@ void    ips200_init                     (ips200_type_enum type_select);
 // 参数说明     width           图像实际宽度
 // 参数说明     height          图像实际高度
 // 返回参数     void
-// 使用示例     ips200_displayimage8660(scc8660_image[0], SCC8660_W, SCC8660_W);
+// 使用示例     ips200_displayimage8660(scc8660_image[0], SCC8660_W, SCC8660_H);
 // 备注信息     拓展的一键显示函数，默认无缩放，从屏幕坐标起始点开始显示
 //-------------------------------------------------------------------------------------------------------------------
 #define ips200_displayimage8660(p, width, height)       (ips200_show_rgb565_image(0, 0, (p), SCC8660_W, SCC8660_H, (width), (height), 1))
-
-//===================================================IPS200 扩展函数==================================================
-
+//==================================================声明 IPS200 扩展函数================================================
 
 
 #endif

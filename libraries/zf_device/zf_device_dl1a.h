@@ -24,13 +24,14 @@
 * 文件名称          zf_device_dl1a
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -54,21 +55,39 @@
 // 需要注意的是 DL1A 最高支持 400KHz 的 IIC 通信速率
 // 需要注意的是 DL1A 最高支持 400KHz 的 IIC 通信速率
 
-#define DL1A_USE_SOFT_IIC        (1)                                         // 默认使用软件 IIC 方式驱动 建议使用软件 IIC 方式
-#if DL1A_USE_SOFT_IIC                                                        // 这两段 颜色正常的才是正确的 颜色灰的就是没有用的
+//=================================================定义 DL1A测距模块 基本配置================================================
+#define DL1A_USE_SOFT_IIC                                   (1)                 // 默认使用软件 IIC 方式驱动 建议使用软件 IIC 方式
+#if DL1A_USE_SOFT_IIC                                                           // 这两段 颜色正常的才是正确的 颜色灰的就是没有用的
 //====================================================软件 IIC 驱动====================================================
-#define DL1A_SOFT_IIC_DELAY      (100)                                       // 软件 IIC 的时钟延时周期 数值越小 IIC 通信速率越快
-#define DL1A_SCL_PIN             (P33_4)                                     // 软件 IIC SCL 引脚 连接 VL53L0X 的 SCL 引脚
-#define DL1A_SDA_PIN             (P33_5)                                     // 软件 IIC SDA 引脚 连接 VL53L0X 的 SDA 引脚
+#define DL1A_SOFT_IIC_DELAY                                 (100)               // 软件 IIC 的时钟延时周期 数值越小 IIC 通信速率越快
+#define DL1A_SCL_PIN                                        (P33_4)             // 软件 IIC SCL 引脚 连接 VL53L0X 的 SCL 引脚
+#define DL1A_SDA_PIN                                        (P33_5)             // 软件 IIC SDA 引脚 连接 VL53L0X 的 SDA 引脚
 //====================================================软件 IIC 驱动====================================================
 #else
 #error "暂不支持硬件IIC通讯"
 #endif
 
-#define DL1A_XSHUT_PIN           (P20_10)
-#define DL1A_TIMEOUT_COUNT       (0x00FF)                                    // VL53L0X 超时计数
+#define DL1A_XS_PIN                                         (P20_10)
+#define DL1A_INT_ENABLE                                     ( 1 )               // 是否启用 INT 引脚 启用则会自动更新数据
+#if DL1A_INT_ENABLE
+#define DL1A_INT_PIN                                        (ERU_CH1_REQ10_P14_3)
+#endif
+#define DL1A_TIMEOUT_COUNT                                  (0x00FF)            // VL53L0X 超时计数
 
-//================================================定义 DL1A 内部地址================================================
+#define DL1A_MIN_TIMING_BUDGET                              (20000)
+
+#define DL1A_GET_START_OVERHEAD                             (1910)
+#define DL1A_SET_START_OVERHEAD                             (1320)
+#define DL1A_END_OVERHEAD                                   (960 )
+#define DL1A_TCC_OVERHEAD                                   (590 )
+#define DL1A_DSS_OVERHEAD                                   (690 )
+#define DL1A_MSRC_OVERHEAD                                  (660 )
+#define DL1A_PRERANGE_OVERHEAD                              (660 )
+#define DL1A_FINALlRANGE_OVERHEAD                           (550 )
+//=================================================定义 DL1A测距模块 基本配置================================================
+
+
+//=================================================定义 DL1A测距模块 内部地址================================================
 #define DL1A_DEV_ADDR                                       (0x52 >> 1)         // 0b0101001
 
 #define DL1A_SYSRANGE_START                                 (0x00)
@@ -146,20 +165,10 @@
 #define DL1A_OSC_CALIBRATE_VAL                              (0xF8)
 
 #define DL1A_IO_VOLTAGE_CONFIG                              (0x89)              // IO 电压设置寄存器地址 默认 1V8 使用修改为 2V8
+//=================================================定义 DL1A测距模块 内部地址================================================
 
-//================================================定义 DL1A 内部地址================================================
 
-#define DL1A_MIN_TIMING_BUDGET                              (20000)
-
-#define DL1A_GET_START_OVERHEAD                             (1910)
-#define DL1A_SET_START_OVERHEAD                             (1320)
-#define DL1A_END_OVERHEAD                                   (960 )
-#define DL1A_TCC_OVERHEAD                                   (590 )
-#define DL1A_DSS_OVERHEAD                                   (690 )
-#define DL1A_MSRC_OVERHEAD                                  (660 )
-#define DL1A_PRERANGE_OVERHEAD                              (660 )
-#define DL1A_FINALlRANGE_OVERHEAD                           (550 )
-
+//================================================定义 DL1A测距模块 参数结构体================================================
 typedef enum
 {
     DL1A_VCSEL_PERIOD_PER_RANGE,
@@ -187,13 +196,20 @@ typedef struct
     uint32 pre_range_us;
     uint32 final_range_us;
 }dl1a_sequence_timeout_step_struct;
+//================================================定义 DL1A测距模块 参数结构体================================================
 
-extern uint8 dl1a_finsh_flag;
-extern uint16 dl1a_distance_mm;
 
-void   dl1a_get_distance (void);
+//=================================================声明 DL1A测距模块 全局变量================================================
+extern uint8 dl1a_finsh_flag;                               // 声明采集完成标志位
+extern uint16 dl1a_distance_mm;                             // 声明距离数据存放变量
+//=================================================声明 DL1A测距模块 全局变量================================================
 
-uint8  dl1a_init         (void);
+
+//=================================================声明 DL1A测距模块 基础函数================================================
+void   dl1a_get_distance (void);                            // 返回以毫米为单位的范围读数
+void   dl1a_int_handler  (void);                            // DL1A INT 中断响应处理函数
+uint8  dl1a_init         (void);                            // 初始化 DL1A
+//=================================================声明 DL1A测距模块 基础函数================================================
 
 #endif
 

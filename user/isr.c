@@ -24,7 +24,7 @@
  * 文件名称          isr
  * 公司名称          成都逐飞科技有限公司
  * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
- * 开发环境          ADS v1.8.0
+ * 开发环境          ADS v1.9.20
  * 适用平台          TC264D
  * 店铺链接          https://seekfree.taobao.com/
  *
@@ -105,10 +105,13 @@ IFX_INTERRUPT(exti_ch0_ch4_isr, 0, EXTI_CH0_CH4_INT_PRIO)
 
 IFX_INTERRUPT(exti_ch1_ch5_isr, 0, EXTI_CH1_CH5_INT_PRIO)
 {
-    interrupt_global_enable(0);             // 开启中断嵌套
+    interrupt_global_enable(0); // 开启中断嵌套
+
     if (exti_flag_get(ERU_CH1_REQ10_P14_3)) // 通道1中断
     {
         exti_flag_clear(ERU_CH1_REQ10_P14_3);
+
+        tof_module_exti_handler(); // ToF 模块 INT 更新中断
     }
 
     if (exti_flag_get(ERU_CH5_REQ1_P15_8)) // 通道5中断
@@ -155,77 +158,72 @@ IFX_INTERRUPT(dma_ch5_isr, 0, DMA_INT_PRIO)
 // **************************** DMA中断函数 ****************************
 
 // **************************** 串口中断函数 ****************************
+// 串口0默认作为调试串口
 IFX_INTERRUPT(uart0_tx_isr, 0, UART0_TX_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrTransmit(&uart0_handle);
 }
 IFX_INTERRUPT(uart0_rx_isr, 0, UART0_RX_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrReceive(&uart0_handle);
 
 #if DEBUG_UART_USE_INTERRUPT   // 如果开启 debug 串口中断
     debug_interrupr_handler(); // 调用 debug 串口接收处理函数 数据会被 debug 环形缓冲区读取
 #endif                         // 如果修改了 DEBUG_UART_INDEX 那这段代码需要放到对应的串口中断去
-}
-IFX_INTERRUPT(uart0_er_isr, 0, UART0_ER_INT_PRIO)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrError(&uart0_handle);
 }
 
 // 串口1默认连接到摄像头配置串口
 IFX_INTERRUPT(uart1_tx_isr, 0, UART1_TX_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrTransmit(&uart1_handle);
 }
 IFX_INTERRUPT(uart1_rx_isr, 0, UART1_RX_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrReceive(&uart1_handle);
-    camera_uart_handler(); // 摄像头参数配置统一回调函数
-}
-IFX_INTERRUPT(uart1_er_isr, 0, UART1_ER_INT_PRIO)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrError(&uart1_handle);
+    camera_uart_handler();      // 摄像头参数配置统一回调函数
 }
 
 // 串口2默认连接到无线转串口模块
 IFX_INTERRUPT(uart2_tx_isr, 0, UART2_TX_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrTransmit(&uart2_handle);
 }
+
 IFX_INTERRUPT(uart2_rx_isr, 0, UART2_RX_INT_PRIO)
 {
-    interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrReceive(&uart2_handle);
+    interrupt_global_enable(0);     // 开启中断嵌套
     wireless_module_uart_handler(); // 无线模块统一回调函数
+}
+// 串口3默认连接到GPS定位模块
+IFX_INTERRUPT(uart3_tx_isr, 0, UART3_TX_INT_PRIO)
+{
+    interrupt_global_enable(0); // 开启中断嵌套
+}
+
+IFX_INTERRUPT(uart3_rx_isr, 0, UART3_RX_INT_PRIO)
+{
+    interrupt_global_enable(0); // 开启中断嵌套
+    gnss_uart_callback();       // GNSS串口回调函数
+}
+
+// 串口通讯错误中断
+IFX_INTERRUPT(uart0_er_isr, 0, UART0_ER_INT_PRIO)
+{
+    interrupt_global_enable(0); // 开启中断嵌套
+    IfxAsclin_Asc_isrError(&uart0_handle);
+}
+IFX_INTERRUPT(uart1_er_isr, 0, UART1_ER_INT_PRIO)
+{
+    interrupt_global_enable(0); // 开启中断嵌套
+    IfxAsclin_Asc_isrError(&uart1_handle);
 }
 IFX_INTERRUPT(uart2_er_isr, 0, UART2_ER_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     IfxAsclin_Asc_isrError(&uart2_handle);
 }
-
-IFX_INTERRUPT(uart3_tx_isr, 0, UART3_TX_INT_PRIO)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrTransmit(&uart3_handle);
-}
-IFX_INTERRUPT(uart3_rx_isr, 0, UART3_RX_INT_PRIO)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    IfxAsclin_Asc_isrReceive(&uart3_handle);
-
-    gps_uart_callback(); // GPS 串口回调函数
-}
 IFX_INTERRUPT(uart3_er_isr, 0, UART3_ER_INT_PRIO)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     IfxAsclin_Asc_isrError(&uart3_handle);
 }
-// **************************** 串口中断函数 ****************************

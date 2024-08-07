@@ -24,13 +24,15 @@
 * 文件名称          zf_device_imu963ra
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
+* 2024-01-30       pudding            更正宏转换函数 变量增加括号
 ********************************************************************************************************************/
 /********************************************************************************************************************
 * 接线定义：
@@ -59,6 +61,7 @@
 
 #include "zf_common_typedef.h"
 
+//================================================定义 IMU963RA 基本配置================================================
 #define IMU963RA_USE_SOFT_IIC                       (0)                         // 默认使用硬件 SPI 方式驱动
 #if IMU963RA_USE_SOFT_IIC                                                       // 这两段 颜色正常的才是正确的 颜色灰的就是没有用的
 //====================================================软件 IIC 驱动====================================================
@@ -67,6 +70,7 @@
 #define IMU963RA_SDA_PIN                            (P20_14)                    // 软件 IIC SDA 引脚 连接 IMU963RA 的 SDA 引脚
 //====================================================软件 IIC 驱动====================================================
 #else
+
 //====================================================硬件 SPI 驱动====================================================
 #define IMU963RA_SPI_SPEED                          (10 * 1000 * 1000)          // 硬件 SPI 速率
 #define IMU963RA_SPI                                (SPI_0           )          // 硬件 SPI 号
@@ -79,7 +83,36 @@
 #define IMU963RA_CS_PIN                             (P20_13)                    // CS 片选引脚
 #define IMU963RA_CS(x)                              (x? (gpio_high(IMU963RA_CS_PIN)): (gpio_low(IMU963RA_CS_PIN)))
 
+typedef enum
+{
+    IMU963RA_ACC_SAMPLE_SGN_2G ,                                                // 加速度计量程 ±2G  (ACC = Accelerometer 加速度计) (SGN = signum 带符号数 表示正负范围) (G = g 重力加速度 g≈9.80 m/s^2)
+    IMU963RA_ACC_SAMPLE_SGN_4G ,                                                // 加速度计量程 ±4G  (ACC = Accelerometer 加速度计) (SGN = signum 带符号数 表示正负范围) (G = g 重力加速度 g≈9.80 m/s^2)
+    IMU963RA_ACC_SAMPLE_SGN_8G ,                                                // 加速度计量程 ±8G  (ACC = Accelerometer 加速度计) (SGN = signum 带符号数 表示正负范围) (G = g 重力加速度 g≈9.80 m/s^2)
+    IMU963RA_ACC_SAMPLE_SGN_16G,                                                // 加速度计量程 ±16G (ACC = Accelerometer 加速度计) (SGN = signum 带符号数 表示正负范围) (G = g 重力加速度 g≈9.80 m/s^2)
+}imu963ra_acc_sample_config;
+
+typedef enum
+{
+    IMU963RA_GYRO_SAMPLE_SGN_125DPS ,                                           // 陀螺仪量程 ±125DPS  (GYRO = Gyroscope 陀螺仪) (SGN = signum 带符号数 表示正负范围) (DPS = Degree Per Second 角速度单位 °/S)
+    IMU963RA_GYRO_SAMPLE_SGN_250DPS ,                                           // 陀螺仪量程 ±250DPS  (GYRO = Gyroscope 陀螺仪) (SGN = signum 带符号数 表示正负范围) (DPS = Degree Per Second 角速度单位 °/S)
+    IMU963RA_GYRO_SAMPLE_SGN_500DPS ,                                           // 陀螺仪量程 ±500DPS  (GYRO = Gyroscope 陀螺仪) (SGN = signum 带符号数 表示正负范围) (DPS = Degree Per Second 角速度单位 °/S)
+    IMU963RA_GYRO_SAMPLE_SGN_1000DPS,                                           // 陀螺仪量程 ±1000DPS (GYRO = Gyroscope 陀螺仪) (SGN = signum 带符号数 表示正负范围) (DPS = Degree Per Second 角速度单位 °/S)
+    IMU963RA_GYRO_SAMPLE_SGN_2000DPS,                                           // 陀螺仪量程 ±2000DPS (GYRO = Gyroscope 陀螺仪) (SGN = signum 带符号数 表示正负范围) (DPS = Degree Per Second 角速度单位 °/S)
+    IMU963RA_GYRO_SAMPLE_SGN_4000DPS,                                           // 陀螺仪量程 ±4000DPS (GYRO = Gyroscope 陀螺仪) (SGN = signum 带符号数 表示正负范围) (DPS = Degree Per Second 角速度单位 °/S)
+}imu963ra_gyro_sample_config;
+
+typedef enum
+{
+    IMU963RA_MAG_SAMPLE_2G,                                                     // 磁力计量程 2G (MAG = Magnetometer 磁力计) (G = Gs 高斯)
+    IMU963RA_MAG_SAMPLE_8G,                                                     // 磁力计量程 8G (MAG = Magnetometer 磁力计) (G = Gs 高斯)
+}imu963ra_mag_sample_config;
+
+#define IMU963RA_ACC_SAMPLE_DEFAULT     ( IMU963RA_ACC_SAMPLE_SGN_8G )          // 在这设置默认的 加速度计 初始化量程
+#define IMU963RA_GYRO_SAMPLE_DEFAULT    ( IMU963RA_GYRO_SAMPLE_SGN_2000DPS )    // 在这设置默认的 陀螺仪   初始化量程
+#define IMU963RA_MAG_SAMPLE_DEFAULT     ( IMU963RA_MAG_SAMPLE_8G )              // 在这设置默认的 磁力计   初始化量程
 #define IMU963RA_TIMEOUT_COUNT                      (0x00FF)                    // IMU963RA 超时计数
+//================================================定义 IMU963RA 基本配置================================================
+
 
 //================================================定义 IMU963RA 内部地址================================================
 #define IMU963RA_DEV_ADDR                           (0x6B)                      // SA0接地：0x6A SA0上拉：0x6B 模块默认上拉
@@ -133,24 +166,52 @@
 #define IMU963RA_MAG_SAMPLE                         (0x19)                      // 地磁计量程
 // 设置为:0x19 磁力计量程为:8G     获取到的加速度计数据 除以3000， 可以转化为带物理单位的数据，单位：G(高斯)
 // 设置为:0x09 磁力计量程为:2G     获取到的加速度计数据 除以12000，可以转化为带物理单位的数据，单位：G(高斯)
-
 //================================================定义 IMU963RA 内部地址================================================
 
-//===============================================声明 IMU963RA 数据存储变量===============================================
-extern int16 imu963ra_acc_x,  imu963ra_acc_y,  imu963ra_acc_z;          // 三轴陀螺仪数据
-extern int16 imu963ra_gyro_x, imu963ra_gyro_y, imu963ra_gyro_z;         // 三轴加速度计数据
-extern int16 imu963ra_mag_x,  imu963ra_mag_y,  imu963ra_mag_z;          // 三轴地磁计数据
-//===============================================声明 IMU963RA 数据存储变量===============================================
 
-//==================================================IMU963RA 基础函数==================================================
-void  imu963ra_get_acc              (void);                                 // 获取 IMU963RA 加速度计数据
-void  imu963ra_get_gyro             (void);                                 // 获取 IMU963RA 陀螺仪数据
-void  imu963ra_get_mag              (void);                                 // 获取 IMU963RA 磁力计数据
-float imu963ra_acc_transition       (int16 acc_value);                      // 将   IMU963RA 加速度计数据转换为实际物理数据
-float imu963ra_gyro_transition      (int16 gyro_value);                     // 将   IMU963RA 陀螺仪数据转换为实际物理数据
-float imu963ra_mag_transition       (int16 mag_value);                      // 将   IMU963RA 地磁计数据转换为实际物理数据
-uint8 imu963ra_init                 (void);                                 // 初始化 IMU963RA
-//==================================================IMU963RA 基础函数==================================================
+//================================================声明 IMU963RA 全局变量================================================
+extern int16 imu963ra_acc_x,  imu963ra_acc_y,  imu963ra_acc_z;                  // 三轴陀螺仪数据      GYRO (陀螺仪)
+extern int16 imu963ra_gyro_x, imu963ra_gyro_y, imu963ra_gyro_z;                 // 三轴加速度计数据     ACC  (accelerometer 加速度计)
+extern int16 imu963ra_mag_x,  imu963ra_mag_y,  imu963ra_mag_z;                  // 三轴磁力计数据      MAG  (magnetometer 磁力计)
+extern float imu963ra_transition_factor[3];                                     // 转换实际值的比例
+//================================================声明 IMU963RA 全局变量================================================
 
+
+//================================================声明 IMU963RA 基础函数================================================
+void    imu963ra_get_acc            (void);                                     // 获取 IMU963RA 加速度计数据
+void    imu963ra_get_gyro           (void);                                     // 获取 IMU963RA 陀螺仪数据
+void    imu963ra_get_mag            (void);                                     // 获取 IMU963RA 磁力计数据
+uint8   imu963ra_init               (void);                                     // 初始化 IMU963RA
+//================================================声明 IMU963RA 基础函数================================================
+
+
+//================================================声明 IMU963RA 拓展函数================================================
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     将 IMU963RA 加速度计数据转换为实际物理数据
+// 参数说明     acc_value       任意轴的加速度计数据
+// 返回参数     void
+// 使用示例     float data = imu963ra_acc_transition(imu963ra_acc_x);               // 单位为 g(m/s^2)
+// 备注信息
+//-------------------------------------------------------------------------------------------------------------------
+#define imu963ra_acc_transition(acc_value)      ((float)(acc_value) / imu963ra_transition_factor[0])
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     将 IMU963RA 陀螺仪数据转换为实际物理数据
+// 参数说明     gyro_value      任意轴的陀螺仪数据
+// 返回参数     void
+// 使用示例     float data = imu963ra_gyro_transition(imu963ra_gyro_x);             // 单位为 °/s
+// 备注信息
+//-------------------------------------------------------------------------------------------------------------------
+#define imu963ra_gyro_transition(gyro_value)    ((float)(gyro_value) / imu963ra_transition_factor[1])
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     将 IMU963RA 磁力计数据转换为实际物理数据
+// 参数说明     mag_value       任意轴的磁力计数据
+// 返回参数     void
+// 使用示例     float data = imu963ra_mag_transition(imu963ra_mag_x);               // 单位为 G
+// 备注信息
+//-------------------------------------------------------------------------------------------------------------------
+#define imu963ra_mag_transition(mag_value)    ((float)mag_value / imu963ra_transition_factor[2])
+//================================================声明 IMU963RA 拓展函数================================================
 
 #endif

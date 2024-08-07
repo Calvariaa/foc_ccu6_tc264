@@ -24,13 +24,14 @@
 * 文件名称          main
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
-* 2022-09-15       pudding             first version
+* 2022-09-15       pudding           first version
+* 2023-04-25       pudding           增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -49,29 +50,26 @@
 
 #include "zf_common_typedef.h"
 
-
-//=================================================9141蓝牙 驱动配置====================================================
+//=================================================定义 9141蓝牙 基本配置================================================
 #define BLUETOOTH_CH9141_INDEX              (UART_2)                        // 蓝牙模块对应使用的串口号
 #define BLUETOOTH_CH9141_BUAD_RATE          (115200)                        // 蓝牙模块对应使用的串口波特率
 #define BLUETOOTH_CH9141_TX_PIN             (UART2_RX_P10_6)                // 蓝牙模块对应模块的 TX 要接到单片机的 RX
 #define BLUETOOTH_CH9141_RX_PIN             (UART2_TX_P10_5)                // 蓝牙模块对应模块的 RX 要接到单片机的 TX
-#define BLUETOOTH_CH9141_RTS_PIN            (P10_2)                         // 蓝牙模块对应模块的 RTS 引脚
-//=================================================9141蓝牙 驱动配置====================================================
+#define BLUETOOTH_CH9141_RTS_PIN            (P10_2)                         // 蓝牙模块对应模块的 RTS 引脚(流控位)
 
-#define BLUETOOTH_CH9141_BUFFER_SIZE        (64)
-#define BLUETOOTH_CH9141_TIMEOUT_COUNT      (500)
+#define BLUETOOTH_CH9141_BUFFER_SIZE        (64)                            // 接收数据的缓冲区大小
+#define BLUETOOTH_CH9141_TIMEOUT_COUNT      (500)                           // 执行操作的超时时间
+//=================================================定义 9141蓝牙 基本配置================================================
 
-//=================================================9141蓝牙 基础函数====================================================
-uint32  bluetooth_ch9141_send_byte          (const uint8 data);
-uint32  bluetooth_ch9141_send_buff          (const uint8 *buff, uint32 len);
-uint32  bluetooth_ch9141_send_string        (const char *str);
-void    bluetooth_ch9141_send_image         (const uint8 *image_addr, uint32 image_size);
 
-uint32  bluetooth_ch9141_read_buff          (uint8 *buff, uint32 len);
-
-void    bluetooth_ch9141_uart_callback      (void);
-
-uint8   bluetooth_ch9141_init               (void);
-//=================================================9141蓝牙 基础函数====================================================
+//=================================================声明 9141蓝牙 基础函数================================================
+uint32  bluetooth_ch9141_send_byte          (const uint8 data);                             // 蓝牙转串口模块 发送数据
+uint32  bluetooth_ch9141_send_buffer        (const uint8 *buff, uint32 len);                // 蓝牙转串口模块 发送数组
+uint32  bluetooth_ch9141_send_string        (const char *str);                              // 蓝牙转串口模块 发送字符串
+void    bluetooth_ch9141_send_image         (const uint8 *image_addr, uint32 image_size);   // 蓝牙转串口模块 发送摄像头图像至上位机查看图像
+uint32  bluetooth_ch9141_read_buffer        (uint8 *buff, uint32 len);                      // 蓝牙转串口模块 读取函数
+void    bluetooth_ch9141_uart_callback      (void);                                         // 蓝牙转串口模块 串口中断回调函数
+uint8   bluetooth_ch9141_init               (void);                                         // 蓝牙转串口模块 初始化
+//=================================================声明 9141蓝牙 基础函数================================================
 
 #endif

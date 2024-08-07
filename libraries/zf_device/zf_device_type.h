@@ -24,13 +24,15 @@
 * 文件名称          zf_device_type
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
+* 2023-05-26       pudding            新增SPI WIFI 中断回调指针
 ********************************************************************************************************************/
 
 #ifndef _zf_device_type_h_
@@ -38,7 +40,7 @@
 
 #include "zf_common_debug.h"
 
-//==============================================定义 外设 枚举体==================================================
+//==============================================定义 外设 参数结构体==================================================
 typedef enum
 {
     NO_CAMERE = 0,                                                              // 无摄像头
@@ -53,13 +55,22 @@ typedef enum
     NO_WIRELESS = 0,                                                            // 无设备
     WIRELESS_UART,                                                              // 无线串口
     BLUETOOTH_CH9141,                                                           // 蓝牙 CH9141
-    WIFI_UART,
+    WIFI_UART,                                                                  // 串口 WiFi
+    RECEIVER_UART,                                                              // 枪式遥控器
 }wireless_type_enum;
-//==============================================定义 外设 枚举体==================================================
 
+typedef enum
+{
+    NO_TOF = 0,                                                                 // 无设备
+    TOF_DL1A,                                                                   // DL1A
+    TOF_DL1B,                                                                   // DL1B
+}tof_type_enum;
+//==============================================定义 外设 参数结构体==================================================
+
+
+//===========================================声明 回调函数指针及外设 类型==============================================
 typedef void (*callback_function)(void);
 
-//===========================================声明回调函数指针及外设类型==================================================
 extern wireless_type_enum wireless_type;
 extern callback_function wireless_module_uart_handler;                          // 无线串口接收中断函数指针，根据初始化时设置的函数进行跳转
 
@@ -67,11 +78,17 @@ extern camera_type_enum camera_type;
 extern callback_function camera_dma_handler;                                    // 串口通讯中断函数指针，根据初始化时设置的函数进行跳转
 extern callback_function camera_vsync_handler;                                  // 串口通讯中断函数指针，根据初始化时设置的函数进行跳转
 extern callback_function camera_uart_handler;                                   // 串口通讯中断函数指针，根据初始化时设置的函数进行跳转
-//===========================================声明回调函数指针及外设类型==================================================
+extern callback_function wireless_module_spi_handler;                           // WIFI SPI GPIO中断函数指针，根据初始化时设置的函数进行跳转
 
-//=============================================中断回调 基础函数===================================================
+extern tof_type_enum     tof_type;                                              // ToF 模块 类型
+extern callback_function tof_module_exti_handler;                               // ToF 模块 INT 更新中断
+//===========================================声明 回调函数指针及外设 类型==============================================
+
+
+//=============================================声明 中断回调 基础函数================================================
 void   set_camera_type          (camera_type_enum type_set, callback_function vsync_callback, callback_function dma_callback, callback_function uart_callback);
-void   set_wireless_type        (wireless_type_enum type_set, callback_function uart_callback);
-//=============================================中断回调 基础函数===================================================
+void   set_wireless_type        (wireless_type_enum type_set, callback_function wireless_callback);
+void   set_tof_type             (tof_type_enum type_set, callback_function exti_callback);
+//=============================================声明 中断回调 基础函数================================================
 
 #endif

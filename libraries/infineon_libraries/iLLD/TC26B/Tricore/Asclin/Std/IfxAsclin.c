@@ -402,7 +402,7 @@ uint32 IfxAsclin_write32(Ifx_ASCLIN *asclin, uint32 *data, uint32 count)
 }
 
 
-uint32 IfxAsclin_write8(Ifx_ASCLIN *asclin, uint8 *data, uint32 count)
+uint32 IfxAsclin_write8(Ifx_ASCLIN *asclin,const uint8 *data, uint32 count)
 {
     volatile Ifx_ASCLIN_TXDATA *txData = (volatile Ifx_ASCLIN_TXDATA *)&asclin->TXDATA.U;
 

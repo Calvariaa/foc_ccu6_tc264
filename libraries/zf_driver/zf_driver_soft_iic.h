@@ -24,7 +24,7 @@
 * 文件名称          zf_driver_soft_iic
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -45,8 +45,8 @@ typedef struct
     uint32              sda_pin;                                                // 用于记录对应的引脚编号
     uint8               addr;                                                   // 器件地址 七位地址模式
     uint32              delay;                                                  // 模拟 IIC 软延时时长  0：1370KHz 10：1020KHz 20：757KHz 30: 633KHz  40: 532Khz  50: 448KHz  60: 395KHz  70: 359KHz  80: 324KHz  100: 268KHz  1000：32KHz
-    void               *iic_scl;                                               // 记录 SCL 端口地址
-    void               *iic_sda;                                               // 记录 SDA 端口地址
+    void               *iic_scl;                                                // 记录 SCL 端口地址
+    void               *iic_sda;                                                // 记录 SDA 端口地址
 }soft_iic_info_struct;
 
 //==================================================SOFT_IIC 基础函数====================================================
@@ -73,6 +73,9 @@ void        soft_iic_read_8bit_registers    (soft_iic_info_struct *soft_iic_obj,
 
 uint16      soft_iic_read_16bit_register    (soft_iic_info_struct *soft_iic_obj, const uint16 register_name);
 void        soft_iic_read_16bit_registers   (soft_iic_info_struct *soft_iic_obj, const uint16 register_name, uint16 *data, uint32 len);
+
+void        soft_iic_transfer_8bit_array    (soft_iic_info_struct *soft_iic_obj, const uint8 *write_data, uint32 write_len, uint8 *read_data, uint32 read_len);
+void        soft_iic_transfer_16bit_array   (soft_iic_info_struct *soft_iic_obj, const uint16 *write_data, uint32 write_len, uint16 *read_data, uint32 read_len);
 
 void        soft_iic_sccb_write_register    (soft_iic_info_struct *soft_iic_obj, const uint8 register_name, uint8 data);
 uint8       soft_iic_sccb_read_register     (soft_iic_info_struct *soft_iic_obj, const uint8 register_name);

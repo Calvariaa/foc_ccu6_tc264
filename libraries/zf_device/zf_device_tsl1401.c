@@ -24,7 +24,7 @@
 * 文件名称          zf_device_tsl1401
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -54,7 +54,7 @@
 
 uint16 tsl1401_data[2][TSL1401_DATA_LEN];                                       // TSL1401 数据存放数组
 
-static uint8 tsl1401_init_state = 0;
+static uint8 tsl1401_init_state = 0;                                            // TSL1401 初始化标志位
 vuint8 tsl1401_finish_flag;                                                     // TSL1401 数据准备就绪标志位
 
 //-------------------------------------------------------------------------------------------------------------------

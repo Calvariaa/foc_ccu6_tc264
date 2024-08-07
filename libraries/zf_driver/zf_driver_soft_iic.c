@@ -24,13 +24,14 @@
 * 文件名称          zf_driver_soft_iic
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2022-07-06       pudding            修复 soft_iic transfer 函数读取长度为 0 时发送 restart 信号的 bug
 ********************************************************************************************************************/
 
 #include "zf_common_debug.h"
@@ -49,7 +50,7 @@
 // 使用示例     soft_iic_delay(1);
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-#define soft_iic_delay(x)  for(uint32 i = x; i--; )
+#define soft_iic_delay(x)  for(vuint32 i = x; i--; )
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     软件 IIC GPIO拉高
@@ -568,13 +569,17 @@ void soft_iic_transfer_8bit_array (soft_iic_info_struct *soft_iic_obj, const uin
     {
         soft_iic_send_data(soft_iic_obj, *write_data ++);
     }
-    soft_iic_start(soft_iic_obj);
-    soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-    while(read_len --)
+    if(read_len)
     {
-        *read_data ++ = soft_iic_read_data(soft_iic_obj, read_len == 0);
+        soft_iic_start(soft_iic_obj);
+        soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+        while(read_len --)
+        {
+            *read_data ++ = soft_iic_read_data(soft_iic_obj, 0 == read_len);
+        }
     }
     soft_iic_stop(soft_iic_obj);
+
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -597,13 +602,16 @@ void soft_iic_transfer_16bit_array (soft_iic_info_struct *soft_iic_obj, const ui
         soft_iic_send_data(soft_iic_obj, (uint8)((*write_data & 0xFF00) >> 8));
         soft_iic_send_data(soft_iic_obj, (uint8)(*write_data ++ & 0x00FF));
     }
-    soft_iic_start(soft_iic_obj);
-    soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
-    while(read_len --)
+    if(read_len)
     {
-        *read_data = soft_iic_read_data(soft_iic_obj, 0);
-        *read_data = ((*read_data << 8)| soft_iic_read_data(soft_iic_obj, read_len == 0));
-        read_data ++;
+        soft_iic_start(soft_iic_obj);
+        soft_iic_send_data(soft_iic_obj, soft_iic_obj->addr << 1 | 0x01);
+        while(read_len --)
+        {
+            *read_data = soft_iic_read_data(soft_iic_obj, 0);
+            *read_data = ((*read_data << 8)| soft_iic_read_data(soft_iic_obj, 0 == read_len));
+            read_data ++;
+        }
     }
     soft_iic_stop(soft_iic_obj);
 }

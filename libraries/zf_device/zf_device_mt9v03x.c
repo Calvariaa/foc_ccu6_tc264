@@ -24,13 +24,14 @@
 * 文件名称          zf_device_mt9v03x
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -60,25 +61,24 @@
 #include "zf_device_config.h"
 #include "zf_device_mt9v03x.h"
 
-vuint8  mt9v03x_finish_flag = 0;                             // 一场图像采集完成标志位
-IFX_ALIGN(4) uint8  mt9v03x_image[MT9V03X_H][MT9V03X_W];     // 必须4字节对齐
+vuint8  mt9v03x_finish_flag = 0;                            // 一场图像采集完成标志位
+IFX_ALIGN(4) uint8  mt9v03x_image[MT9V03X_H][MT9V03X_W];    // 必须4字节对齐
 
-static  m9v03x_type_enum mt9v03x_type;
-static  uint16    mt9v03x_version = 0x00;
+static  m9v03x_type_enum mt9v03x_type;                      // 定义摄像头类型
+static  uint16    mt9v03x_version = 0x00;                   // 定义摄像头版本号
 
 
-int16   timeout = MT9V03X_INIT_TIMEOUT;
+int16   timeout = MT9V03X_INIT_TIMEOUT;                     // 定义超时溢出时长
 
-uint8   mt9v03x_lost_flag = 1;  // 图像丢失标志位
-uint8   mt9v03x_dma_int_num;    // 当前DMA中断次数
-uint8   mt9v03x_dma_init_flag;  // 是否需要重新初始化
+uint8   mt9v03x_lost_flag = 1;                              // 图像丢失标志位
+uint8   mt9v03x_dma_int_num;                                // 当前DMA中断次数
+uint8   mt9v03x_dma_init_flag;                              // 是否需要重新初始化
 uint8   mt9v03x_link_list_num;
 
 // 需要配置到摄像头的数据 不允许在这修改参数
 static int16 mt9v03x_set_confing_buffer[MT9V03X_CONFIG_FINISH][2]=
 {
     {MT9V03X_INIT,              0},                                             // 摄像头开始初始化
-
     {MT9V03X_AUTO_EXP,          MT9V03X_AUTO_EXP_DEF},                          // 自动曝光设置   范围1-63 0为关闭 如果自动曝光开启  EXP_TIME命令设置的数据将会变为最大曝光时间，也就是自动曝光时间的上限
     {MT9V03X_EXP_TIME,          MT9V03X_EXP_TIME_DEF},                          // 曝光时间      摄像头收到后会自动计算出最大曝光时间，如果设置过大则设置为计算出来的最大曝光值
     {MT9V03X_FPS,               MT9V03X_FPS_DEF},                               // 图像帧率      摄像头收到后会自动计算出最大FPS，如果过大则设置为计算出来的最大FPS
@@ -115,7 +115,7 @@ static uint8 mt9v03x_set_config (int16 buff[MT9V03X_CONFIG_FINISH][2])
 {
     uint8 return_state = 1;
     uint8  uart_buffer[4];
-    uint16 temp;
+    uint16 temp = 0;
     uint16 timeout_count = 0;
     uint32 loop_count = 0;
     uint32 uart_buffer_index = 0;
@@ -127,7 +127,7 @@ static uint8 mt9v03x_set_config (int16 buff[MT9V03X_CONFIG_FINISH][2])
     }
     // 设置参数  具体请参看问题锦集手册
     // 开始配置摄像头并重新初始化
-    for(; loop_count < MT9V03X_SET_DATA; loop_count --)
+    for(; MT9V03X_SET_DATA > loop_count; loop_count --)
     {
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = (uint8)buff[loop_count][0];
@@ -169,7 +169,7 @@ static uint8 mt9v03x_get_config (int16 buff[MT9V03X_CONFIG_FINISH - 1][2])
 {
     uint8 return_state = 0;
     uint8  uart_buffer[4];
-    uint16 temp;
+    uint16 temp = 0;
     uint16 timeout_count = 0;
     uint32 loop_count = 0;
     uint32 uart_buffer_index = 0;
@@ -180,9 +180,9 @@ static uint8 mt9v03x_get_config (int16 buff[MT9V03X_CONFIG_FINISH - 1][2])
         default:        loop_count = MT9V03X_GAIN;       break;
     }
 
-    for(loop_count = loop_count - 1; loop_count >= 1; loop_count --)
+    for(loop_count = loop_count - 1; 1 <= loop_count; loop_count --)
     {
-        if(mt9v03x_version < 0x0230 && buff[loop_count][0] == MT9V03X_PCLK_MODE)
+        if((0x0230 > mt9v03x_version) && (MT9V03X_PCLK_MODE == buff[loop_count][0]))
         {
             continue;
         }
@@ -193,7 +193,7 @@ static uint8 mt9v03x_get_config (int16 buff[MT9V03X_CONFIG_FINISH - 1][2])
         uart_buffer[3] = (uint8)temp;
         uart_write_buffer(MT9V03X_COF_UART, uart_buffer, 4);
 
-        timeout_count = 0;
+        timeout_count = 0;    
         do
         {
             if(3 <= fifo_used(&camera_receiver_fifo))
@@ -205,7 +205,7 @@ static uint8 mt9v03x_get_config (int16 buff[MT9V03X_CONFIG_FINISH - 1][2])
             }
             system_delay_ms(1);
         }while(MT9V03X_INIT_TIMEOUT > timeout_count ++);
-        if(timeout_count > MT9V03X_INIT_TIMEOUT)                                // 超时
+        if(MT9V03X_INIT_TIMEOUT < timeout_count)                                // 超时
         {
             return_state = 1;
             break;
@@ -221,7 +221,7 @@ static uint8 mt9v03x_get_config (int16 buff[MT9V03X_CONFIG_FINISH - 1][2])
 //  返回参数      void
 //  使用示例      mt9v03x_uart_callback();
 //-------------------------------------------------------------------------------------------------------------------
-static void mt9v03x_uart_callback (void)
+static void mt9v03x_uart_handler (void)
 {
     uint8 data = 0;
     uart_query_byte(MT9V03X_COF_UART, &data);
@@ -347,11 +347,12 @@ uint8 mt9v03x_set_exposure_time (uint16 light)
     uint8 return_state = 0;
     if(MT9V03X_UART == mt9v03x_type)
     {
+        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, mt9v03x_uart_handler);
         uint8  uart_buffer[4];
-        uint16 temp;
+        uint16 temp = 0;
         uint16 timeout_count = 0;
         uint32 uart_buffer_index = 0;
-        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, mt9v03x_uart_callback);    // 设置连接摄像头类型
+
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = MT9V03X_SET_EXP_TIME;
         temp = light;
@@ -374,12 +375,12 @@ uint8 mt9v03x_set_exposure_time (uint16 light)
         {
             return_state = 1;
         }
+        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, NULL);
     }
     else
     {
         return_state = mt9v03x_set_exposure_time_sccb(light);
     }
-    set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, NULL);    // 设置连接摄像头类型
     return return_state;
 }
 
@@ -396,11 +397,12 @@ uint8 mt9v03x_set_reg (uint8 addr, uint16 data)
     uint8 return_state = 0;
     if(MT9V03X_UART == mt9v03x_type)
     {
+        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, mt9v03x_uart_handler);
         uint8  uart_buffer[4];
-        uint16 temp;
+        uint16 temp = 0;
         uint16 timeout_count = 0;
         uint32 uart_buffer_index = 0;
-        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, mt9v03x_uart_callback);    // 设置连接摄像头类型
+
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = MT9V03X_SET_ADDR;
         temp = addr;
@@ -431,15 +433,14 @@ uint8 mt9v03x_set_reg (uint8 addr, uint16 data)
         {
             return_state = 1;
         }
+        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, NULL);
     }
     else
     {
         return_state = mt9v03x_set_reg_sccb(addr, data);
     }
-    set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, NULL);    // 设置连接摄像头类型
     return return_state;
 }
-
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     MT9V03X 摄像头初始化
@@ -454,28 +455,44 @@ uint8 mt9v03x_init (void)
     soft_iic_info_struct mt9v03x_iic_struct;
     do
     {
-        system_delay_ms(500);
-        set_camera_type(CAMERA_GRAYSCALE, NULL, NULL, NULL);    // 设置连接摄像头类型
+        system_delay_ms(200);
         // 首先尝试SCCB通讯
         mt9v03x_type = MT9V03X_SCCB;
+        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, NULL);
         soft_iic_init(&mt9v03x_iic_struct, 0, MT9V03X_COF_IIC_DELAY, MT9V03X_COF_IIC_SCL, MT9V03X_COF_IIC_SDA);
         if(mt9v03x_set_config_sccb(&mt9v03x_iic_struct, mt9v03x_set_confing_buffer))
         {
             // SCCB通讯失败，尝试串口通讯
             mt9v03x_type = MT9V03X_UART;
+            set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, mt9v03x_uart_handler);
             camera_fifo_init();
-            set_camera_type(CAMERA_GRAYSCALE, NULL, NULL, mt9v03x_uart_callback);    // 设置连接摄像头类型
-            uart_init (MT9V03X_COF_UART, MT9V03X_COF_BAUR, MT9V03X_COF_UART_RX, MT9V03X_COF_UART_TX);   //初始换串口 配置摄像头
+
+            // 初始换串口 配置摄像头
+            uart_init(MT9V03X_COF_UART, MT9V03X_COF_BAUR, MT9V03X_COF_UART_RX, MT9V03X_COF_UART_TX);
             uart_rx_interrupt(MT9V03X_COF_UART, 1);
             fifo_clear(&camera_receiver_fifo);
+            // 等待摄像头上电初始化成功 方式有两种：延时或者通过获取配置的方式 二选一
+            // system_delay_ms(1000);                                               // 延时方式
+
+            // if(mt9v03x_get_config(mt9v03x_get_confing_buffer))
+            // {
+            //     // 如果程序在输出了断言信息 并且提示出错位置在这里
+            //     // 那么就是串口通信出错并超时退出了
+            //     // 检查一下接线有没有问题 如果没问题可能就是坏了
+            //     zf_log(0, "MT9V03X get config error.");
+            //     set_camera_type(NO_CAMERE, NULL, NULL, NULL);
+            //     return_state = 1;
+            //     break;
+            // }
             mt9v03x_version = mt9v03x_get_version();                                // 获取配置的方式
 
             if(mt9v03x_set_config(mt9v03x_set_confing_buffer))
             {
                 // 如果程序在输出了断言信息 并且提示出错位置在这里
-                // 那么就是通信出错并超时退出了
+                // 那么就是串口通信出错并超时退出了
                 // 检查一下接线有没有问题 如果没问题可能就是坏了
                 zf_log(0, "MT9V03X set config error.");
+                uart_rx_interrupt(MT9V03X_COF_UART, 0);
                 set_camera_type(NO_CAMERE, NULL, NULL, NULL);
                 return_state = 1;
                 break;
@@ -488,15 +505,14 @@ uint8 mt9v03x_init (void)
                 // 那么就是串口通信出错并超时退出了
                 // 检查一下接线有没有问题 如果没问题可能就是坏了
                 zf_log(0, "MT9V03X get config error.");
+                uart_rx_interrupt(MT9V03X_COF_UART, 0);
                 set_camera_type(NO_CAMERE, NULL, NULL, NULL);
                 return_state = 1;
                 break;
             }
         }
-        set_camera_type(CAMERA_GRAYSCALE, mt9v03x_vsync_handler, mt9v03x_dma_handler, NULL);    // 设置连接摄像头类型
         mt9v03x_link_list_num = camera_init(MT9V03X_DATA_ADD, mt9v03x_image[0], MT9V03X_IMAGE_SIZE);
     }while(0);
-
     return return_state;
 }
 

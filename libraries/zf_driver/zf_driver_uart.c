@@ -24,13 +24,15 @@
 * 文件名称          zf_driver_uart
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-09-27       pudding            修改串口发送和接收的通信逻辑，将直接从底层读取或者写入数据，不再通过中断处理
+* 2023-10-07       pudding            新增统一回调函数指针
 ********************************************************************************************************************/
 
 #include "IFXPORT.h"
@@ -40,6 +42,7 @@
 #include "SysSe/Bsp/Bsp.h"
 #include "isr_config.h"
 #include "zf_common_debug.h"
+#include "zf_common_function.h"
 #include "zf_driver_uart.h"
 
 
@@ -54,18 +57,14 @@ static IfxAsclin_Asc_Config uart_config;
 
 
 // 创建串口缓存数组
-static uint8 uart0_tx_buffer[UART0_TX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-static uint8 uart0_rx_buffer[UART0_RX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-
-static uint8 uart1_tx_buffer[UART1_TX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-static uint8 uart1_rx_buffer[UART1_RX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-
-static uint8 uart2_tx_buffer[UART2_TX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-static uint8 uart2_rx_buffer[UART2_RX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-
-static uint8 uart3_tx_buffer[UART3_TX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-static uint8 uart3_rx_buffer[UART3_RX_BUFFER_SIZE + sizeof(Ifx_Fifo) + 8];
-
+static uint8 uart0_tx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart0_rx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart1_tx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart1_rx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart2_tx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart2_rx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart3_tx_buffer[1 + sizeof(Ifx_Fifo) + 8];
+static uint8 uart3_rx_buffer[1 + sizeof(Ifx_Fifo) + 8];
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介       串口中断优先级设置
@@ -125,29 +124,29 @@ void uart_set_buffer (uart_index_enum uartn)
         {
             uart_config.txBuffer     = &uart0_tx_buffer;
             uart_config.rxBuffer     = &uart0_rx_buffer;
-            uart_config.txBufferSize = UART0_TX_BUFFER_SIZE;
-            uart_config.rxBufferSize = UART0_RX_BUFFER_SIZE;
+            uart_config.txBufferSize = 1;
+            uart_config.rxBufferSize = 1;
         }break;
         case UART_1:
         {
             uart_config.txBuffer     = &uart1_tx_buffer;
             uart_config.rxBuffer     = &uart1_rx_buffer;
-            uart_config.txBufferSize = UART1_TX_BUFFER_SIZE;
-            uart_config.rxBufferSize = UART1_RX_BUFFER_SIZE;
+            uart_config.txBufferSize = 1;
+            uart_config.rxBufferSize = 1;
         }break;
         case UART_2:
         {
             uart_config.txBuffer     = &uart2_tx_buffer;
             uart_config.rxBuffer     = &uart2_rx_buffer;
-            uart_config.txBufferSize = UART2_TX_BUFFER_SIZE;
-            uart_config.rxBufferSize = UART2_RX_BUFFER_SIZE;
+            uart_config.txBufferSize = 1;
+            uart_config.rxBufferSize = 1;
         }break;
         case UART_3:
         {
             uart_config.txBuffer     = &uart3_tx_buffer;
             uart_config.rxBuffer     = &uart3_rx_buffer;
-            uart_config.txBufferSize = UART3_TX_BUFFER_SIZE;
-            uart_config.rxBufferSize = UART3_RX_BUFFER_SIZE;
+            uart_config.txBufferSize = 1;
+            uart_config.rxBufferSize = 1;
         }break;
         default: IFX_ASSERT(IFX_VERBOSE_LEVEL_ERROR, FALSE);
     }
@@ -251,23 +250,10 @@ void uart_mux (uart_index_enum uartn, uart_tx_pin_enum tx_pin, uart_rx_pin_enum 
             else IFX_ASSERT(IFX_VERBOSE_LEVEL_ERROR, FALSE);
 
         }break;
+        default:break;
     }
 }
 
-//-------------------------------------------------------------------------------------------------------------------
-// 函数简介       串口等待发送
-// 参数说明       uart_n          串口模块号 参照 zf_driver_uart.h 内 uart_index_enum 枚举体定义
-// 参数说明       dat             需要发送的字节
-// 返回参数       void
-// 使用示例       uart_write_byte_wait(UART_1, 0xA5);                 // 往串口1的发送缓冲区写入0xA5，并等待数据发送完成
-// 备注信息
-//-------------------------------------------------------------------------------------------------------------------
-void uart_write_byte_wait (uart_index_enum uart_n, const uint8 dat)
-{
-    Ifx_SizeT count = 1;
-    (void)IfxAsclin_Asc_write(uart_get_handle(uart_n), &dat, &count, TIME_INFINITE);
-    while(TRUE == uart_get_handle(uart_n)->txInProgress);
-}
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介       串口发送写入
 // 参数说明       uart_n          串口模块号 参照 zf_driver_uart.h 内 uart_index_enum 枚举体定义
@@ -278,10 +264,12 @@ void uart_write_byte_wait (uart_index_enum uart_n, const uint8 dat)
 //-------------------------------------------------------------------------------------------------------------------
 void uart_write_byte (uart_index_enum uart_n, const uint8 dat)
 {
-    Ifx_SizeT count = 1;
-    (void)IfxAsclin_Asc_write(uart_get_handle(uart_n), &dat, &count, TIME_INFINITE);
-}
+    IfxAsclin_Asc* uart_handle;
+    uart_handle = uart_get_handle(uart_n);
 
+    while(IfxAsclin_getTxFifoFillLevel(uart_handle->asclin) != 0);
+    IfxAsclin_write8(uart_handle->asclin, &dat, 1);
+}
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介       串口发送数组
@@ -329,8 +317,14 @@ void uart_write_string (uart_index_enum uart_n, const char *str)
 //-------------------------------------------------------------------------------------------------------------------
 uint8 uart_read_byte (uart_index_enum uart_n)
 {
-    while(!IfxAsclin_Asc_getReadCount(uart_get_handle(uart_n)));
-    return (uint8)IfxAsclin_Asc_blockingRead(uart_get_handle(uart_n));
+
+    uint8 return_num = 0;
+    IfxAsclin_Asc* uart_handle;
+    uart_handle = uart_get_handle(uart_n);
+    while(IfxAsclin_getRxFifoFillLevel(uart_handle->asclin) == 0);
+    IfxAsclin_read8(uart_handle->asclin, &return_num, 1);
+
+    return return_num;
 }
 
 
@@ -345,9 +339,11 @@ uint8 uart_read_byte (uart_index_enum uart_n)
 uint8 uart_query_byte (uart_index_enum uart_n, uint8 *dat)
 {
     uint8 return_num = 0;
-    if(IfxAsclin_Asc_getReadCount(uart_get_handle(uart_n)) >0)
+    IfxAsclin_Asc* uart_handle;
+    uart_handle = uart_get_handle(uart_n);
+    if(IfxAsclin_getRxFifoFillLevel(uart_handle->asclin) > 0)
     {
-        *dat = IfxAsclin_Asc_blockingRead(uart_get_handle(uart_n));
+        IfxAsclin_read8(uart_handle->asclin, dat, 1);
         return_num = 1;
     }
     return return_num;
@@ -378,7 +374,6 @@ void uart_tx_interrupt (uart_index_enum uart_n, uint32 status)
     {
         IfxSrc_disable(src);
     }
-    IfxAsclin_enableTxFifoOutlet(asclinSFR, (boolean)status);
 }
 
 
@@ -407,9 +402,57 @@ void uart_rx_interrupt (uart_index_enum uart_n, uint32 status)
     {
         IfxSrc_disable(src);
     }
-    IfxAsclin_enableRxFifoInlet(asclinSFR, (boolean)status);
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     sbus初始化
+// 参数说明     uartn       串口通道(UART_0,UART_1,UART_2,UART_3)
+// 参数说明     baud        串口波特率
+// 参数说明     tx_pin      串口发送引脚号
+// 参数说明     rx_pin      串口接收引脚号
+// 返回参数     void
+// 使用示例     uart_sbus_init(UART_2, 100000, UART2_TX_P10_5, UART2_RX_P10_6);
+// 备注信息
+//-------------------------------------------------------------------------------------------------------------------
+void uart_sbus_init (uart_index_enum uartn, uint32 baud, uart_tx_pin_enum tx_pin, uart_rx_pin_enum rx_pin)
+{
+
+    boolean interrupt_state = disableInterrupts();
+
+    volatile Ifx_ASCLIN *moudle = IfxAsclin_getAddress((IfxAsclin_Index)uartn);
+
+    IfxAsclin_Asc_initModuleConfig(&uart_config, moudle);   // 初始化化配置结构体
+
+    uart_set_buffer(uartn);                                 // 设置缓冲区
+
+    uart_set_interrupt_priority(uartn);                     // 设置中断优先级
+
+    uart_config.clockSource           = IfxAsclin_ClockSource_ascFastClock;     // 使用高速时钟 最大波特率6.25M
+    uart_config.baudrate.prescaler    = 4;
+    uart_config.baudrate.baudrate     = (float32)baud;
+    uart_config.baudrate.oversampling = IfxAsclin_OversamplingFactor_8;
+
+    uart_config.frame.stopBit         =  IfxAsclin_StopBit_2;                    //停止位
+    uart_config.frame.parityType      = IfxAsclin_ParityType_even;               //偶校验
+    uart_config.frame.dataLength      = IfxAsclin_DataLength_8;
+    uart_config.frame.parityBit       = TRUE;                                   //启动校验
+
+    IfxAsclin_Asc_Pins pins;                                                    // 设置引脚
+    pins.cts = NULL;
+    pins.rts = NULL;
+    uart_mux(uartn, tx_pin, rx_pin, (uint32 *)&pins.tx, (uint32 *)&pins.rx);
+    pins.rxMode = IfxPort_InputMode_pullUp;
+    pins.txMode = IfxPort_OutputMode_pushPull;
+    pins.pinDriver = IfxPort_PadDriver_cmosAutomotiveSpeed1;
+    uart_config.pins = &pins;
+
+    IfxAsclin_Asc_initModule(uart_get_handle(uartn), &uart_config);
+    uart_rx_interrupt(uartn, 1);
+    uart_tx_interrupt(uartn, 0);
+    restoreInterrupts(interrupt_state);
 
 }
+
 //-------------------------------------------------------------------------------------------------------------------
 //  函数简介      串口初始化
 //  参数说明      uartn           串口模块号(UART_0,UART_1,UART_2,UART_3)
@@ -422,23 +465,22 @@ void uart_rx_interrupt (uart_index_enum uart_n, uint32 status)
 //-------------------------------------------------------------------------------------------------------------------
 void uart_init (uart_index_enum uart_n, uint32 baud, uart_tx_pin_enum tx_pin, uart_rx_pin_enum rx_pin)
 {
-
-
     boolean interrupt_state = disableInterrupts();
 
     volatile Ifx_ASCLIN *moudle = IfxAsclin_getAddress((IfxAsclin_Index)uart_n);
 
-    IfxAsclin_Asc_initModuleConfig(&uart_config, moudle); // 初始化化配置结构体
+    IfxAsclin_Asc_initModuleConfig(&uart_config, moudle);   // 初始化化配置结构体
 
-    uart_set_buffer(uart_n);                               // 设置缓冲区
+    uart_set_buffer(uart_n);                                // 设置缓冲区
 
-    uart_set_interrupt_priority(uart_n);                   // 设置中断优先级
+    uart_set_interrupt_priority(uart_n);                    // 设置中断优先级
 
+    uart_config.clockSource           = IfxAsclin_ClockSource_ascFastClock;     // 使用高速时钟 最大波特率6.25M
     uart_config.baudrate.prescaler    = 4;
     uart_config.baudrate.baudrate     = (float32)baud;
     uart_config.baudrate.oversampling = IfxAsclin_OversamplingFactor_8;
 
-    IfxAsclin_Asc_Pins pins;                              // 设置引脚
+    IfxAsclin_Asc_Pins pins;                                // 设置引脚
     pins.cts = NULL;
     pins.rts = NULL;
     uart_mux(uart_n, tx_pin, rx_pin, (uint32 *)&pins.tx, (uint32 *)&pins.rx);
@@ -448,6 +490,7 @@ void uart_init (uart_index_enum uart_n, uint32 baud, uart_tx_pin_enum tx_pin, ua
     uart_config.pins = &pins;
 
     IfxAsclin_Asc_initModule(uart_get_handle(uart_n), &uart_config);
-
+    uart_rx_interrupt(uart_n, 0);
+    uart_tx_interrupt(uart_n, 0);
     restoreInterrupts(interrupt_state);
 }

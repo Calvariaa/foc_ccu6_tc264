@@ -24,7 +24,7 @@
 * 文件名称          zf_device_ov7725
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -101,12 +101,12 @@ static uint8 ov7725_set_config (uint16 buff[OV7725_CONFIG_FINISH][2])
 {
     uint8  return_state = 1;
     uint8  uart_buffer[4];
-    uint16 temp;
+    uint16 temp = 0;
     uint16 timeout_count = 0;
     uint32 loop_count = 0;
     uint32 uart_buffer_index = 0;
 
-    for(loop_count = OV7725_ROW; loop_count < OV7725_SET_DATA; loop_count --)
+    for(loop_count = OV7725_ROW; OV7725_SET_DATA > loop_count; loop_count --)
     {
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = (uint8)buff[loop_count][0];
@@ -149,12 +149,12 @@ static uint8 ov7725_get_config (uint16 buff[OV7725_CONFIG_FINISH - 1][2])
 {
     uint8 return_state = 0;
     uint8  uart_buffer[4];
-    uint16 temp;
+    uint16 temp = 0;
     uint16 timeout_count = 0;
     uint32 loop_count = 0;
     uint32 uart_buffer_index = 0;
 
-    for(loop_count = OV7725_ROW - 1; loop_count >= 1; loop_count --)
+    for(loop_count = OV7725_ROW - 1; 1 <= loop_count; loop_count --)
     {
         uart_buffer[0] = 0xA5;
         uart_buffer[1] = OV7725_GET_STATUS;
@@ -178,7 +178,7 @@ static uint8 ov7725_get_config (uint16 buff[OV7725_CONFIG_FINISH - 1][2])
             }
             system_delay_ms(1);
         }while(OV7725_INIT_TIMEOUT > timeout_count ++);
-        if(timeout_count > OV7725_INIT_TIMEOUT)                                 // 超时
+        if(OV7725_INIT_TIMEOUT < timeout_count)                                 // 超时
         {
             return_state = 1;
             break;
@@ -210,7 +210,7 @@ static uint8 ov7725_iic_init (void)
     do
     {
         ov7725_idcode = soft_iic_sccb_read_register(&ov7725_iic_struct, OV7725_VER);
-        if( ov7725_idcode != OV7725_ID )
+        if(OV7725_ID != ov7725_idcode)
         {
             return_state = 1;                                                   // 校验摄像头ID号
             break;
@@ -312,7 +312,7 @@ static uint8 ov7725_iic_init (void)
 //  返回参数      void
 //  使用示例      ov7725_uart_callback();
 //-------------------------------------------------------------------------------------------------------------------
-static void ov7725_uart_callback (void)
+static void ov7725_uart_handler (void)
 {
     uint8 data = 0;
     uart_query_byte(OV7725_COF_UART, &data);
@@ -394,7 +394,7 @@ static void ov7725_dma_handler(void)
 //-------------------------------------------------------------------------------------------------------------------
 uint16 ov7725_uart_get_id (void)
 {
-    uint16 temp;
+    uint16 temp = 0;
     uint8  uart_buffer[4];
     uint16 timeout_count = 0;
     uint16 return_value = 0;
@@ -433,7 +433,7 @@ uint16 ov7725_uart_get_id (void)
 //-------------------------------------------------------------------------------------------------------------------
 uint16 ov7725_get_version (void)
 {
-    uint16 temp;
+    uint16 temp = 0;
     uint8  uart_buffer[4];
     uint16 timeout_count = 0;
     uint16 return_value = 0;
@@ -470,72 +470,78 @@ uint16 ov7725_get_version (void)
 //-------------------------------------------------------------------------------------------------------------------
 uint8 ov7725_init (void)
 {
-    uint8 num = 0;
+    uint16 out_time = 0;
     uint8 return_state = 0;
 
     gpio_init(OV7725_VSYNC_PORT_PIN, GPI, GPIO_LOW, GPI_FLOATING_IN);
-    while(!num)
+    do
     {
-        num = gpio_get_level(OV7725_VSYNC_PORT_PIN);
-        system_delay_ms(1);
-    }
+        while(0 == gpio_get_level(OV7725_VSYNC_PORT_PIN))
+        {
+            system_delay_ms(1);
+            out_time ++;
+            if(OV7725_INIT_TIMEOUT < out_time)
+            {
+                // 如果程序在输出了断言信息 并且提示出错位置在这里
+                // 那大概率没有正确连接小钻风摄像头
+                // 检查一下接线和供电有没有问题 如果没问题可能就是坏了
+                zf_log(0, "OV7725 check error.");
+                return_state = 1;
+                break;
+            }
+        }
 
+        set_camera_type(CAMERA_BIN_UART, ov7725_vsync_handler, ov7725_dma_handler, ov7725_uart_handler);
+        camera_fifo_init();
 
-    if(0 == return_state)
-    {
         uart_init(OV7725_COF_UART, OV7725_COF_BAUR, OV7725_COF_UART_RX, OV7725_COF_UART_TX);
         uart_rx_interrupt(OV7725_COF_UART, 1);
         system_delay_ms(200);
 
-        set_camera_type(CAMERA_BIN_UART, ov7725_vsync_handler, ov7725_dma_handler, ov7725_uart_callback);                                           // 设置连接摄像头类型
-        camera_fifo_init();
-        do
+        // 获取所有参数
+        if(ov7725_get_config(ov7725_get_confing_buffer))
         {
+            uart_rx_interrupt(OV7725_COF_UART, 0);
+            system_delay_ms(200);
+            set_camera_type(CAMERA_BIN_IIC, ov7725_vsync_handler, ov7725_dma_handler, NULL);                                        // 设置连接摄像头类型
+            if(ov7725_iic_init())
+            {
+                zf_log(0, "OV7725 IIC error.");
+                set_camera_type(NO_CAMERE, NULL, NULL, NULL);
+                return_state = 1;
+                zf_log(0, "ov7725 set config error.");
+                break;
+            }
+        }
+        else
+        {
+            // 设置所有参数
+            if(ov7725_set_config(ov7725_set_confing_buffer))
+            {
+                // 如果程序在输出了断言信息 并且提示出错位置在这里
+                // 那么就是串口通信出错并超时退出了
+                // 检查一下接线有没有问题 如果没问题可能就是坏了
+                zf_log(0, "OV7725 set confing error.");
+                uart_rx_interrupt(OV7725_COF_UART, 0);
+                set_camera_type(NO_CAMERE, NULL, NULL, NULL);
+                return_state = 1;
+                break;
+            }
             // 获取所有参数
             if(ov7725_get_config(ov7725_get_confing_buffer))
             {
-                set_camera_type(CAMERA_BIN_IIC, ov7725_vsync_handler, ov7725_dma_handler, ov7725_uart_callback);                                        // 设置连接摄像头类型
-                if(ov7725_iic_init())
-                {
-                    set_camera_type(NO_CAMERE, NULL, NULL, NULL);
-                    return_state = 1;
-                    // 如果程序在输出了断言信息 并且提示出错位置在这里
-                    // 那么就是 IIC 出错并超时退出了
-                    // 检查一下接线有没有问题 如果没问题可能就是坏了
-                    zf_log(0, "ov7725 set config error.");
-                    break;
-                }
+                // 如果程序在输出了断言信息 并且提示出错位置在这里
+                // 那么就是串口通信出错并超时退出了
+                // 检查一下接线有没有问题 如果没问题可能就是坏了
+                zf_log(0, "OV7725 get confing error.");
+                uart_rx_interrupt(OV7725_COF_UART, 0);
+                set_camera_type(NO_CAMERE, NULL, NULL, NULL);
+                return_state = 1;
+                break;
             }
-            else
-            {
-                // 设置所有参数
-                if(ov7725_set_config(ov7725_set_confing_buffer))
-                {
-                    set_camera_type(NO_CAMERE, NULL, NULL, NULL);
-                    return_state = 1;
-                    // 如果程序在输出了断言信息 并且提示出错位置在这里
-                    // 那么就是串口通信出错并超时退出了
-                    // 检查一下接线有没有问题 如果没问题可能就是坏了
-                    zf_log(0, "ov7725 set config error.");
-                    break;
-                }
-
-                // 获取所有参数
-                if(ov7725_get_config(ov7725_get_confing_buffer))
-                {
-                    set_camera_type(NO_CAMERE, NULL, NULL, NULL);
-                    return_state = 1;
-                    // 如果程序在输出了断言信息 并且提示出错位置在这里
-                    // 那么就是串口通信出错并超时退出了
-                    // 检查一下接线有没有问题 如果没问题可能就是坏了
-                    zf_log(0, "ov7725 set config error.");
-                    break;
-                }
-            }
-            ov7725_link_list_num = camera_init(OV7725_DATA_ADD, ov7725_image_binary[0], OV7725_IMAGE_SIZE);
-        }while(0);
-    }
-
+        }
+        ov7725_link_list_num = camera_init(OV7725_DATA_ADD, ov7725_image_binary[0], OV7725_IMAGE_SIZE);
+    }while(0);
     return return_state;
 }
 

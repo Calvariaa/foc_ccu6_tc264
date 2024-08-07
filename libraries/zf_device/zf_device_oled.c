@@ -24,13 +24,14 @@
 * 文件名称          zf_device_oled
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -61,8 +62,8 @@ static soft_spi_info_struct             oled_spi;
 #define oled_spi_write_8bit(data)       (spi_write_8bit(OLED_SPI, (data)))
 #endif
 
-static oled_dir_enum        oled_display_dir    = OLED_DEFAULT_DISPLAY_DIR;
-static oled_font_size_enum  oled_display_font   = OLED_DEFAULT_DISPLAY_FONT;
+static oled_dir_enum        oled_display_dir    = OLED_DEFAULT_DISPLAY_DIR;     // 显示方向
+static oled_font_size_enum  oled_display_font   = OLED_DEFAULT_DISPLAY_FONT;    // 显示字体类型
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     写8位数据
@@ -98,13 +99,13 @@ static void oled_write_command (const uint8 command)
 // 使用示例     oled_set_coordinate(x, y);
 // 备注信息     内部使用用户无需关心
 //-------------------------------------------------------------------------------------------------------------------
-static void oled_set_coordinate (uint16 x, uint16 y)
+static void oled_set_coordinate (uint8 x, uint8 y)
 {
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
 
     oled_write_command(0xb0 + y);
     oled_write_command(((x & 0xf0) >> 4) | 0x10);
@@ -130,16 +131,19 @@ static void oled_debug_init (void)
     switch(oled_display_font)
     {
         case OLED_6X8_FONT:
+        {
             info.font_x_size = 6;
             info.font_y_size = 1;
-            break;
+        }break;
         case OLED_8X16_FONT:
+        {
             info.font_x_size = 8;
             info.font_y_size = 2;
-            break;
+        }break;
         case OLED_16X16_FONT:
+        {
             // 暂不支持
-            break;
+        }break;
     }
     info.output_screen = oled_show_string;
     info.output_screen_clear = oled_clear;
@@ -156,15 +160,15 @@ static void oled_debug_init (void)
 //-------------------------------------------------------------------------------------------------------------------
 void oled_clear (void)
 {
-    uint8 y, x;
+    uint8 y = 0, x = 0;
 
     OLED_CS(0);
-    for(y = 0; y < 8; y ++)
+    for(y = 0; 8 > y; y ++)
     {
         oled_write_command(0xb0 + y);
         oled_write_command(0x01);
         oled_write_command(0x10);
-        for(x = 0; x < OLED_X_MAX; x ++)
+        for(x = 0; OLED_X_MAX > x; x ++)
         {
             oled_write_data(0x00);
         }
@@ -181,15 +185,15 @@ void oled_clear (void)
 //-------------------------------------------------------------------------------------------------------------------
 void oled_full (const uint8 color)
 {
-    uint8 y, x;
+    uint8 y = 0, x = 0;
 
     OLED_CS(0);
-    for(y = 0; y < 8; y ++)
+    for(y = 0; 8 > y; y ++)
     {
         oled_write_command(0xb0 + y);
         oled_write_command(0x01);
         oled_write_command(0x10);
-        for(x = 0; x < OLED_X_MAX; x ++)
+        for(x = 0; OLED_X_MAX > x; x ++)
         {
             oled_write_data(color);
         }
@@ -239,7 +243,7 @@ void oled_draw_point (uint16 x, uint16 y, const uint8 color)
     zf_assert(y < 8);
 
     OLED_CS(0);
-    oled_set_coordinate(x, y);
+    oled_set_coordinate((uint8)x, (uint8)y);
     oled_write_command(0xb0 + y);
     oled_write_command(((x & 0xf0) >> 4) | 0x10);
     oled_write_command((x & 0x0f) | 0x00);
@@ -261,54 +265,57 @@ void oled_show_string (uint16 x, uint16 y, const char ch[])
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
 
     OLED_CS(0);
     uint8 c = 0, i = 0, j = 0;
-    while (ch[j] != '\0')
+    while ('\0' != ch[j])
     {
         switch(oled_display_font)
         {
             case OLED_6X8_FONT:
+            {
                 c = ch[j] - 32;
                 if(x > 126)
                 {
                     x = 0;
                     y ++;
                 }
-                oled_set_coordinate(x, y);
-                for(i = 0; i < 6; i ++)
+                oled_set_coordinate((uint8)x, (uint8)y);
+                for(i = 0; 6 > i; i ++)
                 {
                     oled_write_data(ascii_font_6x8[c][i]);
                 }
                 x += 6;
                 j ++;
-                break;
+            }break;
             case OLED_8X16_FONT:
+            {
                 c = ch[j] - 32;
                 if(x > 120)
                 {
                     x = 0;
                     y ++;
                 }
-                oled_set_coordinate(x, y);
-                for(i = 0; i < 8; i ++)
+                oled_set_coordinate((uint8)x, (uint8)y);
+                for(i = 0; 8 > i; i ++)
                 {
                     oled_write_data(ascii_font_8x16[c][i]);
                 }
 
-                oled_set_coordinate(x, y + 1);
-                for(i = 0; i < 8; i ++)
+                oled_set_coordinate((uint8)x, (uint8)(y + 1));
+                for(i = 0; 8 > i; i ++)
                 {
                     oled_write_data(ascii_font_8x16[c][i + 8]);
                 }
                 x += 8;
                 j ++;
-                break;
+            }break;
             case OLED_16X16_FONT:
+            {
                 // 暂不支持
-                break;
+            }break;
         }
     }
     OLED_CS(1);
@@ -329,11 +336,11 @@ void oled_show_int (uint16 x, uint16 y, const int32 dat, uint8 num)
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
 
-    zf_assert(num > 0);
-    zf_assert(num <= 10);
+    zf_assert(0 < num);
+    zf_assert(10 >= num);
 
     int32 dat_temp = dat;
     int32 offset = 1;
@@ -342,9 +349,10 @@ void oled_show_int (uint16 x, uint16 y, const int32 dat, uint8 num)
     memset(data_buffer, 0, 12);
     memset(data_buffer, ' ', num + 1);
 
-    if(num < 10)
+    // 用来计算余数显示 123 显示 2 位则应该显示 23
+    if(10 > num)
     {
-        for(; num > 0; num --)
+        for(; 0 < num; num --)
         {
             offset *= 10;
         }
@@ -369,11 +377,11 @@ void oled_show_uint (uint16 x,uint16 y,const uint32 dat,uint8 num)
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
 
-    zf_assert(num > 0);
-    zf_assert(num <= 10);
+    zf_assert(0 < num);
+    zf_assert(10 >= num);
 
     uint32 dat_temp = dat;
     int32 offset = 1;
@@ -381,9 +389,10 @@ void oled_show_uint (uint16 x,uint16 y,const uint32 dat,uint8 num)
     memset(data_buffer, 0, 12);
     memset(data_buffer, ' ', num);
 
-    if(num < 10)
+    // 用来计算余数显示 123 显示 2 位则应该显示 23
+    if(10 > num)
     {
-        for(; num > 0; num --)
+        for(; 0 < num; num --)
         {
             offset *= 10;
         }
@@ -397,8 +406,8 @@ void oled_show_uint (uint16 x,uint16 y,const uint32 dat,uint8 num)
 // 函数简介     OLED 显示浮点数 (去除整数部分无效的0)
 // 参数说明     x               x 轴坐标设置 0-127
 // 参数说明     y               y 轴坐标设置 0-7
-// 参数说明     dat             需要显示的变量，数据类型float或double
-// 参数说明     num             整数位显示长度   最高8位
+// 参数说明     dat             需要显示的变量 数据类型 double
+// 参数说明     num             整数位显示长度   最高8位  
 // 参数说明     pointnum        小数位显示长度   最高6位
 // 返回参数     void
 // 使用示例     oled_show_float(0, 0, x, 2, 3);                 // 显示浮点数   整数显示2位   小数显示三位
@@ -407,34 +416,32 @@ void oled_show_uint (uint16 x,uint16 y,const uint32 dat,uint8 num)
 //              有关问题的详情，请自行百度学习   浮点数精度丢失问题。
 //              负数会显示一个 ‘-’号   正数显示一个空格
 //-------------------------------------------------------------------------------------------------------------------
-void oled_show_float (uint16 x,uint16 y,const float dat,uint8 num,uint8 pointnum)
+void oled_show_float (uint16 x,uint16 y,const double dat,uint8 num,uint8 pointnum)
 {
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
 
-    zf_assert(num > 0);
-    zf_assert(num <= 8);
-    zf_assert(pointnum > 0);
-    zf_assert(pointnum <= 6);
+    zf_assert(0 < num);
+    zf_assert(8 >= num);
+    zf_assert(0 < pointnum);
+    zf_assert(6 >= pointnum);
 
-    float dat_temp = dat;
-    float offset = 1.0;
+    double dat_temp = dat;
+    double offset = 1.0;
     char data_buffer[17];
     memset(data_buffer, 0, 17);
     memset(data_buffer, ' ', num + pointnum + 2);
 
-    if(num < 10)
+    // 用来计算余数显示 123 显示 2 位则应该显示 23
+    for(; 0 < num; num --)
     {
-        for(; num > 0; num --)
-        {
-            offset *= 10;
-        }
-        dat_temp = dat_temp - ((int)dat_temp / (int)offset) * offset;
+        offset *= 10;
     }
-    func_float_to_str(data_buffer, dat_temp, pointnum);
+    dat_temp = dat_temp - ((int)dat_temp / (int)offset) * offset;
+    func_double_to_str(data_buffer, dat_temp, pointnum);
     oled_show_string(x, y, data_buffer);
 }
 
@@ -449,19 +456,22 @@ void oled_show_float (uint16 x,uint16 y,const float dat,uint8 num,uint8 pointnum
 // 参数说明     dis_height      图像显示高度 参数范围 [0, 64]
 // 返回参数     void
 // 使用示例     oled_show_binary_image(0, 0, ov7725_image_binary[0], OV7725_W, OV7725_H, OV7725_W, OV7725_H);
-// 备注信息
+// 备注信息     用于显示小钻风的未解压的压缩二值化图像
+//              这个函数不可以用来直接显示总钻风的未压缩的二值化图像
+//              这个函数不可以用来直接显示总钻风的未压缩的二值化图像
+//              这个函数不可以用来直接显示总钻风的未压缩的二值化图像
 //-------------------------------------------------------------------------------------------------------------------
 void oled_show_binary_image (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height)
 {
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
-    zf_assert(image != NULL);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
+    zf_assert(NULL != image);
 
     uint32 i = 0, j = 0, z = 0;
-    uint8 dat;
+    uint8 dat = 0;
     uint32 width_index = 0, height_index = 0;
 
     OLED_CS(0);
@@ -474,7 +484,7 @@ void oled_show_binary_image (uint16 x, uint16 y, const uint8 *image, uint16 widt
         for(i = 0; i < dis_width; i += 8)
         {
             width_index = i * width / dis_width / 8;
-            for(z = 0; z < 8; z ++)
+            for(z = 0; 8 > z; z ++)
             {
                 dat = 0;
                 if(*(image + height_index * width / 8 + width_index + width / 8 * 0) & (0x80 >> z))
@@ -528,19 +538,22 @@ void oled_show_binary_image (uint16 x, uint16 y, const uint8 *image, uint16 widt
 // 参数说明     threshold       二值化显示阈值 0-不开启二值化
 // 返回参数     void
 // 使用示例     oled_show_gray_image(0, 0, mt9v03x_image[0], width, height, 128, 64, x);
-// 备注信息
+// 备注信息     用于显示总钻风的图像
+//              如果要显示二值化图像 直接修改最后一个参数为需要的二值化阈值即可
+//              如果要显示二值化图像 直接修改最后一个参数为需要的二值化阈值即可
+//              如果要显示二值化图像 直接修改最后一个参数为需要的二值化阈值即可
 //-------------------------------------------------------------------------------------------------------------------
 void oled_show_gray_image (uint16 x, uint16 y, const uint8 *image, uint16 width, uint16 height, uint16 dis_width, uint16 dis_height, uint8 threshold)
 {
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
-    zf_assert(image != NULL);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
+    zf_assert(NULL != image);
 
-    int16 i, j;
-    uint8 dat;
+    int16 i = 0, j = 0;
+    uint8 dat = 0;
     uint32 width_index = 0, height_index = 0;
 
     OLED_CS(0);
@@ -609,9 +622,9 @@ void oled_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uint1
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
-    zf_assert(wave != NULL);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
+    zf_assert(NULL != wave);
 
     uint32 i = 0;
     uint32 width_index = 0, value_max_index = 0;
@@ -625,7 +638,9 @@ void oled_show_wave (uint16 x, uint16 y, const uint16 *wave, uint16 width, uint1
     {
         oled_set_coordinate(x + 0, (uint16)(y + y_temp / 8));
         for(x_temp = 0; x_temp < dis_width; x_temp ++)
-            oled_write_data(0x00);
+        {
+            oled_write_data(0x00); 
+        }
     }
     for(i = 0; i < dis_width; i ++)
     {
@@ -656,11 +671,11 @@ void oled_show_chinese (uint16 x, uint16 y, uint8 size, const uint8 *chinese_buf
     // 如果程序在输出了断言信息 并且提示出错位置在这里
     // 那么一般是屏幕显示的时候超过屏幕分辨率范围了
     // 检查一下你的显示调用的函数 自己计算一下哪里超过了屏幕显示范围
-    zf_assert(x < 128);
-    zf_assert(y < 8);
-    zf_assert(chinese_buffer != NULL);
+    zf_assert(128 > x);
+    zf_assert(8 > y);
+    zf_assert(NULL != chinese_buffer);
 
-    int16 i, j, k;
+    int16 i = 0, j = 0, k = 0;
 
     OLED_CS(0);
     for(i = 0; i < number; i ++)
@@ -668,7 +683,7 @@ void oled_show_chinese (uint16 x, uint16 y, uint8 size, const uint8 *chinese_buf
         for(j = 0; j < (size / 8); j ++)
         {
             oled_set_coordinate(x + i * size, y + j);
-            for(k = 0; k < 16; k ++)
+            for(k = 0; 16 > k; k ++)
             {
                 oled_write_data(*chinese_buffer);
                 chinese_buffer ++;
@@ -697,53 +712,53 @@ void oled_init (void)
     gpio_init(OLED_CS_PIN , GPO, GPIO_HIGH, GPO_PUSH_PULL);
 
     oled_set_dir(oled_display_dir);
-    oled_debug_init();
 
     OLED_CS(0);
     OLED_RES(0);
     system_delay_ms(50);
     OLED_RES(1);
 
-    oled_write_command(0xae);                                                   // --turn off oled panel
-    oled_write_command(0x00);                                                   // ---set low column address
-    oled_write_command(0x10);                                                   // ---set high column address
-    oled_write_command(0x40);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         // --set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
-    oled_write_command(0x81);                                                   // --set contrast control register
-    oled_write_command(OLED_BRIGHTNESS);                                        //  Set SEG Output Current Brightness
+    oled_write_command(0xae);                                                   // 关闭oled面板
+    oled_write_command(0x00);                                                   // 设置低列地址
+    oled_write_command(0x10);                                                   // 设置高列地址
+    oled_write_command(0x40);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       // --set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
+    oled_write_command(0x81);                                                   // 设置对比度控制寄存器
+    oled_write_command(OLED_BRIGHTNESS);                                        // 设置SEG输出电流亮度
 
-    if (oled_display_dir == OLED_CROSSWISE)
+    if(OLED_PORTAIT == oled_display_dir)
     {
-        oled_write_command(0xa1);                                               // --Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-        oled_write_command(0xc8);                                               // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+        oled_write_command(0xa1);                                               // 设置 SEG/列 映射     0xa0左右反置 0xa1正常
+        oled_write_command(0xc8);                                               // 设置 COM/行扫描方向    0xc0上下反置 0xc8正常
     }
     else
     {
-        oled_write_command(0xa0);                                               // --Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-        oled_write_command(0xc0);                                               // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+        oled_write_command(0xa0);                                               // 设置 SEG/列 映射     0xa0左右反置 0xa1正常
+        oled_write_command(0xc0);                                               // 设置 COM/行扫描方向    0xc0上下反置 0xc8正常
     }
 
-    oled_write_command(0xa6);                                                   // --set normal display
-    oled_write_command(0xa8);                                                   // --set multiplex ratio(1 to 64)
-    oled_write_command(0x3f);                                                   // --1/64 duty
-    oled_write_command(0xd3);                                                   // -set display offset  Shift Mapping RAM Counter (0x00~0x3F)
-    oled_write_command(0x00);                                                   // -not offset
-    oled_write_command(0xd5);                                                   // --set display clock divide ratio/oscillator frequency
-    oled_write_command(0x80);                                                   // --set divide ratio, Set Clock as 100 Frames/Sec
-    oled_write_command(0xd9);                                                   // --set pre-charge period
-    oled_write_command(0xf1);                                                   // Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-    oled_write_command(0xda);                                                   // --set com pins hardware configuration
+    oled_write_command(0xa6);                                                   // 设置正常显示
+    oled_write_command(0xa8);                                                   // 设置复用比(1 ~ 64)
+    oled_write_command(0x3f);                                                   // 1/64 占比
+    oled_write_command(0xd3);                                                   // 设置显示偏移移位映射RAM计数器（0x00~0x3F）
+    oled_write_command(0x00);                                                   // 不偏移
+    oled_write_command(0xd5);                                                   // 设置显示时钟分频比/振荡器频率
+    oled_write_command(0x80);                                                   // 设置分割比率，设置时钟为100帧/秒
+    oled_write_command(0xd9);                                                   // 设定预充期
+    oled_write_command(0xf1);                                                   // 设置预充为15个时钟，放电为1个时钟
+    oled_write_command(0xda);                                                   // 设置com引脚硬件配置
     oled_write_command(0x12);
-    oled_write_command(0xdb);                                                   // --set vcomh
-    oled_write_command(0x40);                                                   // Set VCOM Deselect Level
-    oled_write_command(0x20);                                                   // -Set Page Addressing Mode (0x00/0x01/0x02)
+    oled_write_command(0xdb);                                                   // 设置 vcomh
+    oled_write_command(0x40);                                                   // 设置VCOM取消选择级别
+    oled_write_command(0x20);                                                   // 设置页面寻址模式(0x00/0x01/0x02)
     oled_write_command(0x02);                                                   //
-    oled_write_command(0x8d);                                                   // --set Charge Pump enable/disable
-    oled_write_command(0x14);                                                   // --set(0x10) disable
-    oled_write_command(0xa4);                                                   //  Disable Entire Display On (0xa4/0xa5)
-    oled_write_command(0xa6);                                                   //  Disable Inverse Display On (0xa6/a7)
-    oled_write_command(0xaf);                                                   // --turn on oled panel
+    oled_write_command(0x8d);                                                   // 设置充电泵启用/禁用
+    oled_write_command(0x14);                                                   // 设置(0 x10)禁用
+    oled_write_command(0xa4);                                                   // 禁用整个显示打开(0xa4/0xa5)
+    oled_write_command(0xa6);                                                   // 禁用反向显示(0xa6/a7)
+    oled_write_command(0xaf);                                                   // 打开oled面板
     OLED_CS(1);
 
     oled_clear();                                                               // 初始清屏
-    oled_set_coordinate(0, 0);
+    oled_set_coordinate(0, 0);                                                  // OLED显示坐标设置
+    oled_debug_init();                                                          // OLED显示DEBUG信息初始化
 }

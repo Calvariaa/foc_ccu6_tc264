@@ -109,6 +109,8 @@ void _Core0_start(void)
     uint32 pcxi;
     uint16 cpuWdtPassword = IfxScuWdt_getCpuWatchdogPasswordInline(&MODULE_SCU.WDTCPU[0]);
 
+
+
     IFX_CFG_CPU_CSTART_PRE_C_INIT_HOOK(0);  /*Test Stack, CSA and Cache */
 
     /* Load user stack pointer */
@@ -153,7 +155,6 @@ void _Core0_start(void)
     /* Setup the context save area linked list. */
 
     IfxCpu_initCSA((uint32 *)__CSA(0), (uint32 *)__CSA_END(0));     /*Initialize the context save area for CPU0 */
-
     {
         /*CPU and safety watchdogs are enabled by default, C initialization functions are not servicing the watchdogs */
         uint16 safetyWdtPassword = IfxScuWdt_getSafetyWatchdogPassword();
@@ -161,10 +162,14 @@ void _Core0_start(void)
         IfxScuWdt_disableSafetyWatchdog(safetyWdtPassword);
 
         Ifx_C_Init();           /*Initialization of C runtime variables */
-
-        IfxScuWdt_enableCpuWatchdog(cpuWdtPassword);
-        IfxScuWdt_enableSafetyWatchdog(safetyWdtPassword);
+//        IfxScuWdt_enableCpuWatchdog(cpuWdtPassword);
+//        IfxScuWdt_enableSafetyWatchdog(safetyWdtPassword);
     }
+
+    uint16 password;
+    password = IfxScuWdt_getSafetyWatchdogPassword();
+    IfxScuWdt_clearSafetyEndinitInline(password);
+    MODULE_SCU.RSTCON.U = 0;
 
     /*Initialize the clock system */
     IFXCPU_CSTART_CCU_INIT_HOOK();

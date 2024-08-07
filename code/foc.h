@@ -17,6 +17,9 @@
 #define pi (double)3.141592653589793
 #define pi_2 (double)6.283185307179586
 
+#define ANGLE_TO_RAD(x)     ( (x) * PI / 180.0 )                                // 角度转换为弧度
+#define RAD_TO_ANGLE(x)     ( (x) * 180.0 / PI )                                // 弧度转换为角度
+
 // #define degrees_0   (double)0
 // #define degrees_15  (double)0.261799387799149
 // #define degrees_30  (double)0.523598775598299

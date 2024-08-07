@@ -24,13 +24,15 @@
 * 文件名称          zf_driver_flash
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-07-14       pudding            修复之前不完整的断言判断以及错误的注释内容
+* 2023-07-15       pudding            写入时单独增加是否擦除判断，防止用户使用报错
 ********************************************************************************************************************/
 
 #include "IfxScuWdt.h"
@@ -41,6 +43,7 @@
 
 
 flash_data_union flash_union_buffer[EEPROM_PAGE_LENGTH];                    // FLASH 操作的数据缓冲区
+static uint8     flash_erase_page_flag;                                     // FLASH 擦除页标志位  如果用户没有主动擦除后再写入 则帮用户擦除
 
 //-------------------------------------------------------------------------------------------------------------------
 //  函数简介      校验FLASH页是否有数据
@@ -86,6 +89,8 @@ void flash_erase_page (uint32 sector_num, uint32 page_num)
     IfxScuWdt_setSafetyEndinit  (end_init_sfty_pw);
 
     IfxFlash_waitUnbusy(flash, IfxFlash_FlashType_D0);
+    
+    flash_erase_page_flag = 1;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -131,6 +136,11 @@ void flash_write_page (uint32 sector_num, uint32 page_num, const uint32 *buf, ui
     uint32 data_cont = 0;
     end_init_sfty_pw   = IfxScuWdt_getSafetyWatchdogPassword();
 
+    if(flash_erase_page_flag == 0 && flash_check(sector_num, page_num))
+    {
+        flash_erase_page(sector_num, page_num);
+    }
+
     for(data_cont = 0; data_cont < len; data_cont ++)
     {
         data_addr  = flash_addr + data_cont * FLASH_DATA_SIZE;
@@ -147,6 +157,8 @@ void flash_write_page (uint32 sector_num, uint32 page_num, const uint32 *buf, ui
 
         IfxFlash_waitUnbusy(0, IfxFlash_FlashType_D0);
     }
+
+    flash_erase_page_flag = 0;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -181,8 +193,6 @@ void flash_read_page_to_buffer (uint32 sector_num, uint32 page_num)
 uint8 flash_write_page_from_buffer (uint32 sector_num, uint32 page_num)
 {
     uint32 *data_pointer = (uint32 *)flash_union_buffer;
-
-    zf_assert(EEPROM_PAGE_NUM > page_num);
 
     flash_write_page(0, page_num, data_pointer, EEPROM_PAGE_LENGTH);
 

@@ -24,13 +24,14 @@
 * 文件名称          zf_device_wifi_uart
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -51,7 +52,7 @@
 
 #include "zf_common_typedef.h"
 
-//=================================================WIFI_UART 驱动配置====================================================
+//==============================================定义 WIFI_UART 基本配置===================================================
 #define WIFI_UART_INDEX         (UART_2)                                        // WIFI 模块 所使用到的串口
 #define WIFI_UART_TX_PIN        (UART2_RX_P10_6)                                // 连接 WIFI 模块 TX
 #define WIFI_UART_RX_PIN        (UART2_TX_P10_5)                                // 连接 WIFI 模块 RX
@@ -61,9 +62,10 @@
 #if WIFI_UART_HARDWARE_RST                                                      // 建议使用硬件复位引脚 否则容易出现单片机复位后无法正常初始化模块
 #define WIFI_UART_RST_PIN       (P11_6)                                         // 定义硬件复位引脚
 #endif
-//=================================================WIFI_UART 驱动配置====================================================
+//==============================================定义 WIFI_UART 基本配置===================================================
 
-//=================================================WIFI_UART 参数配置====================================================
+
+//==============================================定义 WIFI_UART 基本参数===================================================
 #define WIFI_UART_BUFFER_SIZE   (256)                                           // 定义接收缓存区大小
 
 #define WIFI_UART_AUTO_CONNECT  (0)                                             // 定义是否初始化时建立TCP或者UDP连接    0-不连接  1-自动连接TCP服务器  2-自动连接UDP服务器  3：自动建立TCP服务器
@@ -75,9 +77,9 @@
 #define WIFI_UART_TARGET_PORT   "8080"                                          // 连接目标的端口
 #define WIFI_UART_LOCAL_PORT    "8080"                                          // 本机端口
 #endif
-//=================================================WIFI_UART 参数配置====================================================
+//==============================================定义 WIFI_UART 基本参数===================================================
 
-//=================================================WIFI_UART 参数枚举====================================================
+//==============================================定义 WIFI_UART 参数结构体==================================================
 typedef enum
 {
     WIFI_UART_STATION,                                                          // 设备模式
@@ -118,17 +120,21 @@ typedef struct
     uint8                           wifi_uart_mac[20];                          // 本机 MAC 地址    字符串形式
     uint8                           wifi_uart_local_ip[17];                     // 本机 IP 地址     字符串形式
     uint8                           wifi_uart_local_port[10];                   // 本机端口号       字符串形式
-    uint8                           wifi_uart_remote_ip[5][15];                 // 远端 IP 地址     字符串形式
+    uint8                           wifi_uart_remote_ip[5][17];                 // 远端 IP 地址     字符串形式
     wifi_uart_mode_enum             wifi_uart_mode;                             // WIFI 模式
     wifi_uart_transfer_mode_enum    wifi_uart_transfer_mode;                    // 当前传输模式
     wifi_uart_connect_mode_enum     wifi_uart_connect_mode;                     // 网络连接模式
     wifi_uart_connect_state_enum    wifi_uart_connect_state;                    // 服务器连接情况
 }wifi_uart_information_struct;
-//=================================================WIFI_UART 参数枚举====================================================
+//==============================================定义 WIFI_UART 参数结构体==================================================
 
+
+//==============================================定义 WIFI_UART 全局变量===================================================
 extern wifi_uart_information_struct wifi_uart_information;
+//==============================================定义 WIFI_UART 全局变量===================================================
 
-//=================================================WIFI_UART 基础函数====================================================
+
+//==============================================定义 WIFI_UART 基础函数===================================================
 uint8   wifi_uart_disconnected_wifi         (void);                                                                         // 断开 WIFI 连接
 uint8   wifi_uart_entry_serianet            (void);                                                                         // 打开透传模式
 uint8   wifi_uart_exit_serianet             (void);                                                                         // 关闭透传模式
@@ -142,12 +148,12 @@ uint8   wifi_uart_entry_tcp_servers         (char *port);                       
 uint8   wifi_uart_exit_tcp_servers          (void);                                                                         // 关闭 TCP 服务器
 uint8   wifi_uart_tcp_servers_check_link    (void);                                                                         // TCP Server 模式下检查当前链接数量 并获取 IP
 
-uint32  wifi_uart_send_buffer               (uint8 *buff, uint32 len);                                                      // WIFI 模块数据发送函数
-uint32  wifi_uart_tcp_servers_send_buffer   (uint8 *buff, uint32 len, wifi_uart_link_id_enum id);                           // WIFI 模块作为 TCP Server 指定目标设备发送函数
+uint32  wifi_uart_send_buffer               (const uint8 *buff, uint32 len);                                                // WIFI 模块数据发送函数
+uint32  wifi_uart_tcp_servers_send_buffer   (const uint8 *buff, uint32 len, wifi_uart_link_id_enum id);                     // WIFI 模块作为 TCP Server 指定目标设备发送函数
 uint32  wifi_uart_read_buffer               (uint8 *buff, uint32 len);                                                      // WIFI 模块数据接收函数
 
 void    wifi_uart_callback                  (void);                                                                         // WIFI 模块串口回调函数
 uint8   wifi_uart_init                      (char *wifi_ssid, char *pass_word, wifi_uart_mode_enum wifi_mode);              // WIFI 模块初始化函数
-//=================================================WIFI_UART 基础函数====================================================
+//==============================================定义 WIFI_UART 基础函数===================================================
 
 #endif

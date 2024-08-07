@@ -24,13 +24,14 @@
 * 文件名称          zf_device_absolute_encoder
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
-* 2022-09-15       pudding             first version
+* 2022-09-15       pudding           first version
+* 2023-04-25       pudding           增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -54,16 +55,16 @@
 
 #include "zf_device_absolute_encoder.h"
 
-static int16 now_location = 0;
-static int16 last_location = 0;
+static int16 now_location = 0;                  // 当前位置定义 static:静态声明，仅此文件可用此变量
+static int16 last_location = 0;                 // 上次位置定义 static:静态声明，仅此文件可用此变量
 
 #if ABSOLUTE_ENCODER_USE_SOFT_SPI
-static soft_spi_info_struct                 absolute_encoder_spi;
-#define absolute_encoder_read()             (soft_spi_read_8bit(&absolute_encoder_spi))
-#define absolute_encoder_write(data)        (soft_spi_write_8bit(&absolute_encoder_spi, (data)))
+static soft_spi_info_struct                 absolute_encoder_spi;                                   // 定义角度编码器软件SPI结构体
+#define absolute_encoder_read()             (soft_spi_read_8bit(&absolute_encoder_spi))             // 定义数据读取函数
+#define absolute_encoder_write(data)        (soft_spi_write_8bit(&absolute_encoder_spi, (data)))    // 定义数据写入函数
 #else
-#define absolute_encoder_read()             (spi_read_8bit(ABSOLUTE_ENCODER_SPI))
-#define absolute_encoder_write(data)        (spi_write_8bit(ABSOLUTE_ENCODER_SPI, (data)))
+#define absolute_encoder_read()             (spi_read_8bit(ABSOLUTE_ENCODER_SPI))                   // 定义数据读取函数
+#define absolute_encoder_write(data)        (spi_write_8bit(ABSOLUTE_ENCODER_SPI, (data)))          // 定义数据写入函数
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -141,12 +142,12 @@ static uint8 absolute_encoder_self_check (void)
     uint16 time_count = 0;
     while(0x1C != absolute_encoder_read_register(6))                            // 获取状态寄存器
     {
-        for(i = 0; i < 6; i ++)
+        for(i = 0; 6 > i; i ++)
         {
             absolute_encoder_write_register(i + 1, dat[i]);                     // 写入默认配置参数
             system_delay_ms(1);
         }
-        if(time_count ++ > ABSOLUTE_ENCODER_TIMEOUT_COUNT)                      // 等待超时
+        if(ABSOLUTE_ENCODER_TIMEOUT_COUNT < time_count ++)                      // 等待超时
         {
             return_state = 1;
             break;
@@ -164,8 +165,8 @@ static uint8 absolute_encoder_self_check (void)
 //-------------------------------------------------------------------------------------------------------------------
 int16 absolute_encoder_get_location (void)
 {
-    last_location = now_location;
-    now_location = absolute_encoder_read_data() >> 4;
+    last_location = now_location;                                               // 更新数据前保存上一次的位置
+    now_location = absolute_encoder_read_data() >> 4;                           // 读取当前位置
     return now_location;
 }
 
@@ -179,9 +180,9 @@ int16 absolute_encoder_get_location (void)
 int16 absolute_encoder_get_offset (void)
 {
     int16 result_data = 0;
-    if(func_abs(now_location - last_location) > 2048)
+    if(2048 < func_abs(now_location - last_location))
     {
-        result_data = (now_location > 2048 ? (now_location - 4096 - last_location) : (now_location + 4096 - last_location));
+        result_data = (2048 < now_location ? (now_location - 4096 - last_location) : (now_location + 4096 - last_location));
     }
     else
     {

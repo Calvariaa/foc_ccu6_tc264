@@ -133,6 +133,8 @@ void IfxCpu_Trap_memoryManagementError(uint32 tin)
     trapWatch = IfxCpu_Trap_extractTrapInfo(IfxCpu_Trap_Class_memoryManagement, tin);
     IFX_CFG_CPU_TRAP_MME_HOOK(trapWatch);
 
+    // 如果单片机卡死在这里，则说明出现了内存管理报错，报错原因需自行排查
+
     IFX_CFG_CPU_TRAP_DEBUG;
     __asm("rslcx"); /* Restore lower context before returning. lower context was stored in the trap vector */
     __asm("rfe");
@@ -158,6 +160,9 @@ void IfxCpu_Trap_instructionError(uint32 tin)
     volatile IfxCpu_Trap trapWatch;
     trapWatch = IfxCpu_Trap_extractTrapInfo(IfxCpu_Trap_Class_instructionErrors, tin);
     IFX_CFG_CPU_TRAP_IE_HOOK(trapWatch);
+
+    // 如果单片机卡死在这里，则说明执行了错误的指令，具体原因通过debug查找
+
     IFX_CFG_CPU_TRAP_DEBUG;
     __asm("rslcx"); /* Restore lower context before returning. lower context was stored in the trap vector */
     __asm("rfe");
@@ -169,6 +174,9 @@ void IfxCpu_Trap_contextManagementError(uint32 tin)
     volatile IfxCpu_Trap trapWatch;
     trapWatch = IfxCpu_Trap_extractTrapInfo(IfxCpu_Trap_Class_contextManagement, tin);
     IFX_CFG_CPU_TRAP_CME_HOOK(trapWatch);
+
+    // 单片机调度管理错误，一般不会触发此类报错，如若触发则自行debug查找问题
+
     IFX_CFG_CPU_TRAP_DEBUG;
     __asm("rslcx"); /* Restore lower context before returning. lower context was stored in the trap vector */
     __asm("rfe");
@@ -196,6 +204,9 @@ void IfxCpu_Trap_assertion(uint32 tin)
     volatile IfxCpu_Trap trapWatch;
     trapWatch = IfxCpu_Trap_extractTrapInfo(IfxCpu_Trap_Class_assertion, tin);
     IFX_CFG_CPU_TRAP_ASSERT_HOOK(trapWatch);
+
+    // 如果单片机卡死在这里，则说明触发了英飞凌的断言，通过调试来查看具体触发断言的位置并修正
+
     IFX_CFG_CPU_TRAP_DEBUG;
     __asm("rslcx"); /* Restore lower context before returning. lower context was stored in the trap vector */
     __asm("rfe");

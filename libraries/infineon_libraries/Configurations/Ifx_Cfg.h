@@ -34,7 +34,7 @@
 /*------------------------------------------Configuration for IfxScu_cfg.h-------------------------------------------*/
 /*********************************************************************************************************************/
 /* External oscillator frequency in Hz */
-#define IFX_CFG_SCU_XTAL_FREQUENCY      (20000000)  /* Allowed values are: 16000000, 20000000 or 40000000 */
+#define IFX_CFG_SCU_XTAL_FREQUENCY      (20000000)  /* Allowed values are9p: 16000000, 20000000 or 40000000 */
 /* PLL frequency in Hz */
 #define IFX_CFG_SCU_PLL_FREQUENCY       (200000000) /* Allowed values are: 80000000, 133000000, 160000000
                                                      * or 200000000 */

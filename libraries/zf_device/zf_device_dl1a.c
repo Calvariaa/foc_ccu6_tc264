@@ -24,13 +24,14 @@
 * 文件名称          zf_device_dl1a
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
-* 2022-09-15       pudding            first version
+* 2022-09-15       pudding           first version
+* 2023-04-28       pudding            增加中文注释说明
 ********************************************************************************************************************/
 /*********************************************************************************************************************
 * 接线定义：
@@ -45,24 +46,22 @@
 
 #include "zf_common_debug.h"
 #include "zf_driver_delay.h"
+#include "zf_driver_exti.h"
 #include "zf_driver_soft_iic.h"
 #include "zf_device_dl1a.h"
 
-uint8 dl1a_finsh_flag;
-uint16 dl1a_distance_mm;
+uint8 dl1a_finsh_flag = 0;                          // 定义采集完成标志位
+uint16 dl1a_distance_mm = 8192;                     // 定义距离数据存放变量
 
 #if DL1A_USE_SOFT_IIC
-static soft_iic_info_struct dl1a_iic_struct;
+static soft_iic_info_struct dl1a_iic_struct;        // 定义软件IIC结构体
 
 #define dl1a_write_array(data, len)          (soft_iic_write_8bit_array(&dl1a_iic_struct, (data), (len)))
 #define dl1a_write_register(reg, data)       (soft_iic_write_8bit_register(&dl1a_iic_struct, (reg), (data)))
 #define dl1a_read_register(reg)              (soft_iic_read_8bit_register(&dl1a_iic_struct, (reg)))
 #define dl1a_read_registers(reg, data, len)  (soft_iic_read_8bit_registers(&dl1a_iic_struct, (reg), (data), (len)))
 #else
-#define dl1a_write_array(data, len)          (iic_write_8bit_array(DL1A_IIC, DL1A_DEV_ADDR, (data), (len)))
-#define dl1a_write_register(reg, data)       (iic_write_8bit_register(DL1A_IIC, DL1A_DEV_ADDR, (reg), (data)))
-#define dl1a_read_register(reg)              (iic_read_8bit_register(DL1A_IIC, DL1A_DEV_ADDR, (reg)))
-#define dl1a_read_registers(reg, data, len)  (iic_read_8bit_registers(DL1A_IIC, DL1A_DEV_ADDR, (reg), (data), (len)))
+#error "暂不支持硬件IIC通讯"
 #endif
 
 // 这个速率表示从目标反射并被设备检测到的信号的振幅
@@ -112,11 +111,11 @@ static uint8 dl1a_get_spad_info (uint8 *index, uint8 *type_is_aperture)
         dl1a_write_register(0x83, 0x00);
 
         tmp = 0x00;
-        while(tmp == 0x00 || tmp == 0xFF)
+        while(0x00 == tmp || 0xFF == tmp)
         {
             system_delay_ms(1);
             dl1a_read_registers(0x83, &tmp, 1);
-            if(loop_count++ > DL1A_TIMEOUT_COUNT)
+            if(DL1A_TIMEOUT_COUNT < loop_count ++)
             {
                 return_state = 1;
                 break;
@@ -204,11 +203,11 @@ static uint16 dl1a_encode_timeout (uint16 timeout_mclks)
     uint16 ms_byte = 0;
     uint16 return_data = 0;
 
-    if (timeout_mclks > 0)
+    if(0 < timeout_mclks)
     {
         // 格式: (LSByte * 2 ^ MSByte) + 1
         ls_byte = timeout_mclks - 1;
-        while ((ls_byte & 0xFFFFFF00) > 0)
+        while(0 < (ls_byte & 0xFFFFFF00))
         {
             ls_byte >>= 1;
             ms_byte++;
@@ -247,12 +246,12 @@ static void dl1a_get_sequence_step_enables(dl1a_sequence_enables_step_struct *en
 static uint8 dl1a_get_vcsel_pulse_period (dl1a_vcsel_period_type_enum type)
 {
     uint8 data_buffer = 0;
-    if (type == DL1A_VCSEL_PERIOD_PER_RANGE)
+    if(DL1A_VCSEL_PERIOD_PER_RANGE == type)
     {
         dl1a_read_registers(DL1A_PRE_RANGE_CONFIG_VCSEL_PERIOD, &data_buffer, 1);
         data_buffer = decode_vcsel_period(data_buffer);
     }
-    else if (type == DL1A_VCSEL_PERIOD_FINAL_RANGE)
+    else if(DL1A_VCSEL_PERIOD_FINAL_RANGE == type)
     {
         dl1a_read_registers(DL1A_FINAL_RANGE_CONFIG_VCSEL_PERIOD, &data_buffer, 1);
         data_buffer = decode_vcsel_period(data_buffer);
@@ -294,7 +293,7 @@ static void dl1a_get_sequence_step_timeouts (dl1a_sequence_enables_step_struct c
     reg16_buffer = ((uint16) reg_buffer[0] << 8) | reg_buffer[1];
     timeouts->final_range_mclks = dl1a_decode_timeout(reg16_buffer);
 
-    if (enables->pre_range)
+    if(enables->pre_range)
     {
         timeouts->final_range_mclks -= timeouts->pre_range_mclks;
     }
@@ -318,11 +317,11 @@ static uint8 dl1a_perform_single_ref_calibration (uint8 vhv_init_byte)
     {
         dl1a_write_register(DL1A_SYSRANGE_START, 0x01 | vhv_init_byte);
         dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, &data_buffer, 1);
-        while ((data_buffer & 0x07) == 0)
+        while(0 == (data_buffer & 0x07))
         {
             system_delay_ms(1);
             dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, &data_buffer, 1);
-            if (loop_count ++ > DL1A_TIMEOUT_COUNT)
+            if(DL1A_TIMEOUT_COUNT < loop_count ++)
             {
                 return_state = 1;
                 break;
@@ -361,7 +360,7 @@ static uint8 dl1a_set_measurement_timing_budget (uint32 budget_us)
 
     do
     {
-        if (budget_us < DL1A_MIN_TIMING_BUDGET)
+        if(DL1A_MIN_TIMING_BUDGET > budget_us)
         {
             return_state = 1;
             break;
@@ -525,6 +524,20 @@ void dl1a_get_distance (void)
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+// 函数简介     DL1A INT 中断响应处理函数
+// 参数说明     void
+// 返回参数     void
+// 使用示例     dl1a_int_handler();
+// 备注信息     本函数需要在 DL1A_INT_PIN 对应的外部中断处理函数中调用
+//-------------------------------------------------------------------------------------------------------------------
+void dl1a_int_handler (void)
+{
+#if DL1A_INT_ENABLE
+    dl1a_get_distance();
+#endif
+}
+
+//-------------------------------------------------------------------------------------------------------------------
 // 函数简介     初始化 DL1A
 // 参数说明     void
 // 返回参数     uint8           1-初始化失败 0-初始化成功
@@ -534,11 +547,12 @@ void dl1a_get_distance (void)
 uint8 dl1a_init (void)
 {
     uint32 measurement_timing_budget_us;
-    uint8 stop_variable;
+    uint8 stop_variable = 0;
     uint8 return_state = 0;
-    uint8 reg_data_buffer ;
+    uint8 reg_data_buffer = 0;
     uint8 ref_spad_map[6];
     uint8 data_buffer[7];
+    uint8 i = 0;
 
     memset(ref_spad_map, 0, 6);
     memset(data_buffer, 0, 7);
@@ -548,14 +562,14 @@ uint8 dl1a_init (void)
 #else
     iic_init(DL1A_IIC, DL1A_DEV_ADDR, DL1A_IIC_SPEED, DL1A_SCL_PIN, DL1A_SDA_PIN);
 #endif
-    gpio_init(DL1A_XSHUT_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
+    gpio_init(DL1A_XS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
 
     do
     {
         system_delay_ms(100);
-        gpio_low(DL1A_XSHUT_PIN);
+        gpio_low(DL1A_XS_PIN);
         system_delay_ms(50);
-        gpio_high(DL1A_XSHUT_PIN);
+        gpio_high(DL1A_XS_PIN);
         system_delay_ms(100);
 
         // -------------------------------- DL1A 启动初始化 --------------------------------
@@ -583,7 +597,7 @@ uint8 dl1a_init (void)
         // -------------------------------- DL1A 启动初始化 --------------------------------
 
         // -------------------------------- DL1A 配置初始化 --------------------------------
-        if (dl1a_get_spad_info(&data_buffer[0], &data_buffer[1]))
+        if(dl1a_get_spad_info(&data_buffer[0], &data_buffer[1]))
         {
             return_state = 1;
             zf_log(0, "DL1A self check error.");
@@ -600,25 +614,25 @@ uint8 dl1a_init (void)
         dl1a_write_register(DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4);
 
         data_buffer[2] = data_buffer[1] ? 12 : 0; // 12 is the first aperture spad
-        for (uint8 i = 0; i < 48; i++)
+        for(i = 0; 48 > i; i ++)
         {
-            if (i < data_buffer[2] || data_buffer[3] == data_buffer[0])
+            if(i < data_buffer[2] || data_buffer[3] == data_buffer[0])
             {
                 // 此位低于应启用的第一个位
                 // 或者 (eference_spad_count) 位已启用
                 // 因此此位为零
                 ref_spad_map[i / 8] &= ~(1 << (i % 8));
             }
-            else if ((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
+            else if((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
             {
-                data_buffer[3]++;
+                data_buffer[3] ++;
             }
         }
 
         data_buffer[0] = DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0;
-        for(uint8 i = 1; i < 7; i++)
+        for(i = 1; 7 > i; i ++)
         {
-            data_buffer[1] = ref_spad_map[i-1];
+            data_buffer[1] = ref_spad_map[i - 1];
         }
         dl1a_write_array(data_buffer, 7);
 
@@ -720,14 +734,14 @@ uint8 dl1a_init (void)
         // -------------------------------- DL1A 配置初始化 --------------------------------
 
         dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x01);
-        if (dl1a_perform_single_ref_calibration(0x40))
+        if(dl1a_perform_single_ref_calibration(0x40))
         {
             return_state = 1;
             zf_log(0, "DL1A perform single reference calibration error.");
             break;
         }
         dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x02);
-        if (dl1a_perform_single_ref_calibration(0x00))
+        if(dl1a_perform_single_ref_calibration(0x00))
         {
             return_state = 1;
             zf_log(0, "DL1A perform single reference calibration error.");
@@ -748,5 +762,10 @@ uint8 dl1a_init (void)
         dl1a_write_register(DL1A_SYSRANGE_START, 0x02);
     }while(0);
 
+#if DL1A_INT_ENABLE
+    exti_init(DL1A_INT_PIN, EXTI_TRIGGER_FALLING);
+    dl1a_int_handler();
+    dl1a_finsh_flag = 0;
+#endif
     return return_state;
 }

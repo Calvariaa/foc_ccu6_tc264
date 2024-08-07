@@ -24,39 +24,166 @@
 * 文件名称          zf_driver_delay
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-11-28       pudding            修改普通延时逻辑为中断触发，若总中断关闭则使用寄存器循环读取延时
 ********************************************************************************************************************/
 
 #include "IfxStm.h"
 #include "IFXSTM_CFG.h"
+#include "SysSe/Bsp/Bsp.h"
+#include "zf_common_interrupt.h"
 #include "zf_driver_delay.h"
 
 
+#define IFX_INTPRIO_STM0_SR0  220
+#define IFX_INTPRIO_STM1_SR0  221
 
-//-------------------------------------------------------------------------------------------------------------------
-//  函数简介      systick延时函数
-//  参数说明      time            延时一轮的时间（单位为纳秒，可设置范围0-20000000）
-//  参数说明      num             延时多少轮
-//  返回参数      void
-//  使用示例      无需用户调用，用户请使用h文件中的宏定义
-//-------------------------------------------------------------------------------------------------------------------
-void system_delay (uint32 time, uint32 num)
+static vuint8 stm0_isr_flag = 1;
+static vuint8 stm1_isr_flag = 1;
+
+IFX_INTERRUPT(stm0_isr, 0, IFX_INTPRIO_STM0_SR0)
 {
-    uint32 stm_clk;
-    uint32 delay_time;
-    stm_clk = IfxStm_getFrequency(IfxStm_getAddress((IfxStm_Index)(IfxCpu_getCoreId())));
-    delay_time = (uint32)(stm_clk/1000000*time/1000);
+    interrupt_global_enable(0);                     // 开启中断嵌套
+    IfxStm_clearCompareFlag(&MODULE_STM0, IfxStm_Comparator_0);
+    stm0_isr_flag = 0;
+}
 
-    while(num--)
+IFX_INTERRUPT(stm1_isr, 0, IFX_INTPRIO_STM1_SR0)
+{
+    interrupt_global_enable(0);                     // 开启中断嵌套
+    IfxStm_clearCompareFlag(&MODULE_STM1, IfxStm_Comparator_0);
+    stm1_isr_flag = 0;
+}
+//-------------------------------------------------------------------------------------------------------------------
+//  函数简介      system延时函数
+//  参数说明      time            延时一轮的时间（单位为纳秒，可设置范围0-20000000）
+//  返回参数      void
+//  使用示例      无需用户调用，用户请使用h文件中的宏定义 // 100M时钟 最小单位为 10ns
+//-------------------------------------------------------------------------------------------------------------------
+void system_delay_10ns (uint32 time)
+{
+    uint32 interrupt_global_state;
+
+    IfxStm_Index stm_index;
+
+    stm_index = (IfxStm_Index)IfxCpu_getCoreId();
+
+    if(areInterruptsEnabled() == 0)
     {
-        IfxStm_waitTicks(IfxStm_getAddress((IfxStm_Index)(IfxCpu_getCoreId())), delay_time);
+        IfxStm_waitTicks(IfxStm_getAddress(stm_index), time);
+    }
+    else
+    {
+        switch(stm_index)
+        {
+            case IfxStm_Index_0:
+            {
+                Ifx_STM *stm_sfr = &MODULE_STM0;
+                stm0_isr_flag = 1;
+                interrupt_global_state = interrupt_global_disable();     // 关闭全局中断
+                stm_sfr->CMP[0].U = stm_sfr->TIM0.U + time;
+                interrupt_global_enable(interrupt_global_state);         // 打开全局中断
+                while(stm0_isr_flag);
+            }break;
+            case IfxStm_Index_1:
+            {
+                Ifx_STM *stm_sfr = &MODULE_STM1;
+                stm1_isr_flag = 1;
+                interrupt_global_state = interrupt_global_disable();     // 关闭全局中断
+                stm_sfr->CMP[0].U = stm_sfr->TIM0.U + time;
+                interrupt_global_enable(interrupt_global_state);         // 打开全局中断
+                while(stm1_isr_flag);
+            }break;
+            case IfxStm_Index_none: break;
+        }
     }
 }
 
+
+//-------------------------------------------------------------------------------------------------------------------
+//  函数简介      system 微秒 延时函数
+//  参数说明      time            延时时间  单位：us
+//  返回参数      void
+//  使用示例      system_delay_us(100);  // 延时100微秒
+//-------------------------------------------------------------------------------------------------------------------
+void system_delay_us (uint32 time)
+{
+    if(time > 40000000)
+    {
+        while(time > 40000000)
+        {
+            system_delay_10ns(4000000000);
+            time = time - 40000000;
+        }
+        system_delay_10ns(time * 100);
+    }
+    else
+    {
+        system_delay_10ns(time * 100);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+//  函数简介      system 毫秒 延时函数
+//  参数说明      time            延时时间  单位：ms
+//  返回参数      void
+//  使用示例      system_delay_ms(100);  // 延时100毫秒
+//-------------------------------------------------------------------------------------------------------------------
+void system_delay_ms (uint32 time)
+{
+    if(time > 40000)
+    {
+        while(time > 40000)
+        {
+            system_delay_10ns(4000000000);
+            time = time - 40000;
+        }
+        system_delay_10ns(time * 100000);
+    }
+    else
+    {
+        system_delay_10ns(time * 100000);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+//  函数简介      system 延迟初始化函数
+//  返回参数      void
+//  使用示例      system_delay_init();
+//-------------------------------------------------------------------------------------------------------------------
+void system_delay_init(void)
+{
+    IfxStm_CompareConfig stmConfig;
+    boolean interrupt_state = disableInterrupts();
+
+    stmConfig.comparator          = IfxStm_Comparator_0;
+    stmConfig.compareOffset       = IfxStm_ComparatorOffset_0;
+    stmConfig.compareSize         = IfxStm_ComparatorSize_32Bits;
+    stmConfig.comparatorInterrupt = IfxStm_ComparatorInterrupt_ir0;
+    stmConfig.ticks               = 1;
+    stmConfig.triggerPriority     = IFX_INTPRIO_STM0_SR0;
+    stmConfig.typeOfService       = IfxSrc_Tos_cpu0;
+
+    IfxStm_initCompare(&MODULE_STM0, &stmConfig);
+    IfxStm_clearCompareFlag(&MODULE_STM0, IfxStm_Comparator_0);
+
+    stmConfig.comparator          = IfxStm_Comparator_0;
+    stmConfig.compareOffset       = IfxStm_ComparatorOffset_0;
+    stmConfig.compareSize         = IfxStm_ComparatorSize_32Bits;
+    stmConfig.comparatorInterrupt = IfxStm_ComparatorInterrupt_ir0;
+    stmConfig.ticks               = 1;
+    stmConfig.triggerPriority     = IFX_INTPRIO_STM1_SR0;
+    stmConfig.typeOfService       = IfxSrc_Tos_cpu1;
+
+    IfxStm_initCompare(&MODULE_STM1, &stmConfig);
+    IfxStm_clearCompareFlag(&MODULE_STM1, IfxStm_Comparator_0);
+
+    restoreInterrupts(interrupt_state);
+}
 

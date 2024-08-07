@@ -70,8 +70,8 @@
 #define AS5047P_SPI_W (0) //( 0 << 14)
 
 #if AS5047P_ABI_Part_EN
-#define AS5047P_TIM (TIM5_ENCODER)
-#define AS5047P_B (TIM5_ENCODER_CH1_P10_3) // 接模块B
+#define AS5047P_TIM (TIM4_ENCODER)
+#define AS5047P_B (TIM4_ENCODER_CH1_P02_8) // 接模块B
 #define AS5047P_A (TIM5_ENCODER_CH2_P10_1) // 接模块A
 #endif
 

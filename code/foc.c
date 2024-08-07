@@ -25,7 +25,7 @@ int dianliu = 0;
 float error_sum_d = 0;
 float error_sum_q = 0;
 
-extern uint16 data_send[8];
+extern float data_send[8];
 //-------------------------------------------------------------------------------------------------------------------
 //  @brief      克拉克变换
 //  @param      void
@@ -344,6 +344,10 @@ void Mos_All_High_Open(uint16 periodAH, uint16 periodBH, uint16 periodCH)
     IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);                  // 使能
 }
 
+float ang = 0;
+clark_variable adcd_struct;
+park_variable I_out;
+ipark_variable Park_in;
 void sum_cacl()
 {
     if (qidong <= 200000)
@@ -353,22 +357,34 @@ void sum_cacl()
     if (qidong >= 100000)
     {
         // dianliu++;
+
+        // Get_Rotor_Angle();
+        // test
+        ang += 0.01;
+        if (ang >= 360.f)
+            ang = 0.f;
+        theta = ANGLE_TO_RAD((int16)ang);
+#ifdef CURRENTLOOP
+
         adc_read();
-        Get_Rotor_Angle();
-        clark_variable adcd_struct;
-        park_variable I_out;
-        ipark_variable Park_in;
+        data_send[1] = (float)adc_information.current_a;
+        data_send[2] = (float)adc_information.current_b;
+        data_send[3] = (float)adc_information.current_c;
+
         // ipark_variable U_out;
         // out_variable    svpwm_in;
         // svpwm_in        tool_in;
         // svpwm_out     mos_in;
         // svpwm_out  svpwm_out;
+
         /*----------*/
         adcd_struct = clark_cacl(adc_information);
         /*----------*/
         I_out = park_cacl(adcd_struct, theta);
-        look3 = I_out.id_ref * 10000;
-        look4 = I_out.iq_ref * 10000;
+
+        data_send[4] = (float)I_out.id_ref * 10000;
+        data_send[5] = (float)I_out.iq_ref * 10000;
+
         // look5 =  adc_information.current_a *1000;
         //  look6 =  adc_information.current_b *1000;
         // data_send[3]=(int16) I_out.id_ref*1000;
@@ -382,11 +398,15 @@ void sum_cacl()
 
         Current_Close_Loop(FOC_S.Ref_Park, I_out);
 
-        // Park_in.u_d=0;
-        // Park_in.u_q=6;  // 开环值
-        // look1 = Park_in.u_d*1000;
-        look1 = Park_in.u_q * 1000;
-        look2 = Park_in.u_d * 1000;
+        data_send[6] = Park_in.u_q * 1000;
+        data_send[7] = Park_in.u_d * 1000;
+#else
+        // 开环
+        Park_in.u_d = 0;
+        Park_in.u_q = 6;
+
+#endif
+
         FOC_S.V_Clark = iPark_Calc(Park_in, theta);
 
         FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
@@ -394,6 +414,9 @@ void sum_cacl()
         FOC_S.Vector = Vector_Calc(FOC_S.tool, FOC_S.N, BUS_VOLTAGE, PWM_PRIOD_LOAD); // 矢量作用时间计算
         FOC_S.Period = PeriodCal(FOC_S.Vector, FOC_S.N, PWM_PRIOD_LOAD);              // 各桥PWM占空比计算
         Mos_All_High_Open(FOC_S.Period.AH, FOC_S.Period.BH, FOC_S.Period.CH);
+        data_send[8] = (float)FOC_S.Period.AH;
+        data_send[9] = (float)FOC_S.Period.BH;
+        data_send[10] = (float)FOC_S.Period.CH;
 
         // look3 = theta*1000;
 
@@ -409,14 +432,15 @@ void sum_cacl()
         //
         //  look6 = adc_information.current_a*10000;
         //  look4 = adc_information.current_b*10000*10/9;
-        //  look5 = adc_information.current_c*10000;
+        // //  look5 = adc_information.current_c*10000;
 
-        data_send[0] = (int16)look1;
-        data_send[1] = (int16)look2;
-        data_send[2] = (int16)look3;
-        data_send[3] = (int16)look4;
-        data_send[4] = (int16)look5;
-        data_send[5] = (int16)look6;
+        // data_send[0] = (int16)look1;
+        // data_send[1] = (int16)look2;
+        // data_send[2] = (int16)look3;
+        // data_send[3] = (int16)look4;
+        // data_send[4] = (int16)look5;
+        // data_send[5] = (int16)look6;
+
         // data_send[2]=(int16)adc_information.current_c;
 
         // data_send[5]=(uint16)FOC_S.Period.AH;

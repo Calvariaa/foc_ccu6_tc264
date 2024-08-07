@@ -24,25 +24,28 @@
 * 文件名称          zf_common_clock
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-04-26       pudding            新增初始化完成标志等待操作，需要等待CPU0初始化完成后其他CPU才能进行赋值
 ********************************************************************************************************************/
 
 #include "IfxScuEru.h"
 #include "Ifxstm.h"
 #include "Cpu0_Main.h"
 #include "Cpu/Std/IfxCpu.h"
+#include "zf_driver_delay.h"
 #include "zf_common_interrupt.h"
 #include "zf_common_clock.h"
 
-App_Cpu0 g_AppCpu0;                               // 频率信息变量
 
-IFX_ALIGN(4) IfxCpu_syncEvent g_cpuSyncEvent = 0; // 事件同步变量
+App_Cpu0 g_AppCpu0;                                 // 频率信息变量
+
+static vuint8 cpu_init_finish[IfxCpu_Id_none];      // 核心初始化完成标志位
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介          设置系统频率
@@ -94,6 +97,7 @@ void clock_init (void)
     interrupt_global_disable();     // 关闭总中断
     disable_Watchdog();             // 关闭看门狗
     get_clock();                    // 获取系统频率
+    system_delay_init();            // 延时函数初始化
     interrupt_global_enable(0);     // 打开全局中断
 }
 
@@ -106,6 +110,25 @@ void clock_init (void)
 //-------------------------------------------------------------------------------------------------------------------
 void cpu_wait_event_ready (void)
 {
-    IfxCpu_emitEvent(&g_cpuSyncEvent);
-    IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
+    uint8 i;
+    uint8 all_cpu_init_finish;
+
+    if(IfxCpu_getCoreId() != 0)
+    {
+        while(cpu_init_finish[0] == 0);
+    }
+
+    // 调用此函数的核心初始化完毕，标志位置一
+    cpu_init_finish[IfxCpu_getCoreId()] = 1;
+
+    // 等待其他核心初始化完毕
+    do
+    {
+        all_cpu_init_finish = 1;
+        for(i = 0; i < IfxCpu_Id_none; i++)
+        {
+            all_cpu_init_finish *= cpu_init_finish[i];
+        }
+        system_delay_ms(1);
+    }while(0 == all_cpu_init_finish);
 }

@@ -1493,7 +1493,7 @@ IFX_EXTERN uint32 IfxAsclin_write32(Ifx_ASCLIN *asclin, uint32 *data, uint32 cou
  * \param count number of items to be send
  * \return the number of items that could not be send
  */
-IFX_EXTERN uint32 IfxAsclin_write8(Ifx_ASCLIN *asclin, uint8 *data, uint32 count);
+IFX_EXTERN uint32 IfxAsclin_write8(Ifx_ASCLIN *asclin, const uint8 *data, uint32 count);
 
 /** \} */
 

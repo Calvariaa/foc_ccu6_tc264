@@ -24,7 +24,7 @@
 * 文件名称          zf_driver_pit
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -210,6 +210,11 @@ void pit_init (pit_index_enum pit_index, uint32 time)
 
     restoreInterrupts(interrupt_state);
 
-    IfxCcu6_setSuspendMode(module, IfxCcu6_SuspendMode_hard);
+    Ifx_CPU_DBGSR debug_index;
+    debug_index.U = __mfcr(CPU_DBGSR);
+    if(1 == debug_index.B.DE)
+    {
+        IfxCcu6_setSuspendMode(module, IfxCcu6_SuspendMode_hard);
+    }
     IfxCcu6_Timer_start(&g_Ccu6Timer);
 }

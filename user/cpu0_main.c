@@ -24,7 +24,7 @@
  * 文件名称          cpu0_main
  * 公司名称          成都逐飞科技有限公司
  * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
- * 开发环境          ADS v1.8.0
+ * 开发环境          ADS v1.9.4
  * 适用平台          TC264D
  * 店铺链接          https://seekfree.taobao.com/
  *
@@ -36,90 +36,26 @@
 #pragma section all "cpu0_dsram"
 // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
-// char buff;
-// uint16 *buff=0x3FFF;
-// uint16 *buff2;
-// #define buff1     0x3FFF
-
-// extern uint16 buff666;
-// extern uint16 buf666[8];
-uint16 buff1;
-uint16 buff2[8];
-uint16 data_send[8];
-uint16 a;
-uint16 b;
-uint16 c;
-void Data_Send(uart_index_enum uartn, unsigned short int *pst) // 上位机
-{
-    unsigned char _cnt = 0;
-    unsigned char sum = 0;
-    unsigned char data_to_send[23]; // 发送缓存
-    data_to_send[_cnt++] = 0xAA;
-    data_to_send[_cnt++] = 0xAA;
-    data_to_send[_cnt++] = 0x02;
-    data_to_send[_cnt++] = 0;
-    data_to_send[_cnt++] = (unsigned char)(pst[0] >> 8); // 高8位
-    data_to_send[_cnt++] = (unsigned char)pst[0];        // 低8位
-    data_to_send[_cnt++] = (unsigned char)(pst[1] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[1];
-    data_to_send[_cnt++] = (unsigned char)(pst[2] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[2];
-    data_to_send[_cnt++] = (unsigned char)(pst[3] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[3];
-    data_to_send[_cnt++] = (unsigned char)(pst[4] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[4];
-    data_to_send[_cnt++] = (unsigned char)(pst[5] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[5];
-    data_to_send[_cnt++] = (unsigned char)(pst[6] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[6];
-    data_to_send[_cnt++] = (unsigned char)(pst[7] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[7];
-    data_to_send[_cnt++] = (unsigned char)(pst[8] >> 8);
-    data_to_send[_cnt++] = (unsigned char)pst[8];
-    data_to_send[3] = _cnt - 4;
-    sum = 0;
-    for (unsigned char i = 0; i < _cnt; i++)
-        sum += data_to_send[i];
-    data_to_send[_cnt++] = sum;
-    for (unsigned char i = 0; i < _cnt; i++)
-        uart_write_byte(uartn, data_to_send[i]);
-}
-// 特别说明：该开源项目仅用于各参赛同学在设计自己的小车时进行参考，硬件和软件都不能够直接拷贝使用在自己的作品中，请大家参考后重新完成硬件和软件的设计制作。
-// 特别说明：该开源项目仅用于各参赛同学在设计自己的小车时进行参考，硬件和软件都不能够直接拷贝使用在自己的作品中，请大家参考后重新完成硬件和软件的设计制作。
-// 特别说明：该开源项目仅用于各参赛同学在设计自己的小车时进行参考，硬件和软件都不能够直接拷贝使用在自己的作品中，请大家参考后重新完成硬件和软件的设计制作。
-
-// #define DUQU(x)              ((x) ? (gpio_set_level(P20_13,1)) : (gpio_set_level(P20_13,0)))
-
-// uint16 date_cibianmaqi[8];
-// void DUZHI()
-//{
-//    DUQU(0);
-//    spi_read_16bit_registers(0, 0x3FFF|0x80, date_cibianmaqi, 8);
-//   DUQU(1);
-//}
-
+float data_send[8];
+// **************************** 代码区域 ****************************
 int core0_main(void)
 {
-    // 获取时钟频率  务必保留
-    get_clock();
+    clock_init(); // 获取时钟频率<务必保留>
+    debug_init(); // 初始化默认调试串口
+    // 此处编写用户代码 例如外设初始化代码等
 
     // 初始化LED引脚
     led_init();
 
     // 初始化按键引脚
-    key_init();
+    // key_init();
 
     // 初始化adc通道，adc用于采集电源电压、母线电流、相电流的
     adc_collection_init();
 
-    // 霍尔初始化
-    // hall_init();
-
-    // 滑动平均滤波初始化
-    // move_filter_init(&speed_filter);
-    //   move_filter_double_init(&current_a_filter);//滑动滤波初始化
     move_filter_double_init(&id_ref_filter); // 滑动滤波初始化
     move_filter_double_init(&iq_ref_filter); // 滑动滤波初始化
+
     // 初始化输出速度与方向信息的引脚
     //  motor_information_out_init();
 
@@ -135,12 +71,10 @@ int core0_main(void)
     // 初始化定时器,用于输出互补PWM
     ccu6_pwm_init();
 
-    // 初始化定时器,用于计算占空比
-    //  pit_interrupt_us(CCU6_0, PIT_CH0, 20);
-    //   pit_interrupt_us(CCU6_0, PIT_CH0, 10);
-    enableInterrupts();
+    // 此处编写用户代码 例如外设初始化代码等
+    cpu_wait_event_ready(); // 等待所有核心初始化完毕
 
-    while (1)
+    while (TRUE)
     {
         // data_send[0]=(uint16) hall_value_now;
         //                data_send[0]=(uint16) clark.Alpha;
@@ -170,7 +104,12 @@ int core0_main(void)
         // data_send[6]=date_cibianmaqi[6];
         // data_send[7]=date_cibianmaqi[7];
 
-        Data_Send(UART_0, data_send); // 串口
+        // Data_Send(UART_0, data_send); // 串口
+
+        data_send[0] = (float)theta;
+        for (int8 i = 0; i <= 10; i++)
+            printf("%f,", data_send[i]);
+        printf("-1.0\r\n");
 
         //////////////////////////////////////////////////////////////
         // 发送数据到虚拟示波器 虚拟示波器下载链接 https://pan.baidu.com/s/198CMXTZsbI3HAEqNXDngBw
@@ -180,3 +119,4 @@ int core0_main(void)
 }
 
 #pragma section all restore
+// **************************** 代码区域 ****************************

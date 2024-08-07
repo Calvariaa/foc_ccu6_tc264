@@ -24,13 +24,14 @@
 * 文件名称          zf_driver_uart
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2023-10-07       pudding            新增统一回调函数指针
 ********************************************************************************************************************/
 
 #ifndef _zf_driver_uart_h_
@@ -38,19 +39,6 @@
 
 #include "ifxAsclin_Asc.h"
 #include "zf_common_typedef.h"
-
-#define UART0_TX_BUFFER_SIZE 256        // 定义串口0发送缓冲区大小
-#define UART0_RX_BUFFER_SIZE 16         // 定义串口0接收缓冲区大小
-
-#define UART1_TX_BUFFER_SIZE 256
-#define UART1_RX_BUFFER_SIZE 16
-
-#define UART2_TX_BUFFER_SIZE 256
-#define UART2_RX_BUFFER_SIZE 16
-
-#define UART3_TX_BUFFER_SIZE 256
-#define UART3_RX_BUFFER_SIZE 16
-
 
 typedef enum            // 枚举串口引脚 此枚举定义不允许用户修改
 {
@@ -127,7 +115,6 @@ extern IfxAsclin_Asc uart2_handle;
 extern IfxAsclin_Asc uart3_handle;
 
 //====================================================串口 基础函数====================================================
-void    uart_write_byte_wait                (uart_index_enum uart_n, const uint8 dat);
 void    uart_write_byte                     (uart_index_enum uartn, const uint8 dat);
 void    uart_write_buffer                   (uart_index_enum uartn, const uint8 *buff, uint32 len);
 void    uart_write_string                   (uart_index_enum uartn, const char *str);
@@ -138,6 +125,7 @@ uint8   uart_query_byte                     (uart_index_enum uartn, uint8 *dat);
 void    uart_tx_interrupt                   (uart_index_enum uartn, uint32 status);
 void    uart_rx_interrupt                   (uart_index_enum uartn, uint32 status);
 
+void    uart_sbus_init                      (uart_index_enum uartn, uint32 baud, uart_tx_pin_enum tx_pin, uart_rx_pin_enum rx_pin);
 void    uart_init                           (uart_index_enum uartn, uint32 baud, uart_tx_pin_enum tx_pin, uart_rx_pin_enum rx_pin);
 //====================================================串口 基础函数====================================================
 

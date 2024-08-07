@@ -24,25 +24,28 @@
 * 文件名称          zf_common_debug
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
 * 修改记录
 * 日期              作者                备注
 * 2022-09-15       pudding            first version
+* 2022-05-26       pudding            新增调试串口发送函数，修改默认开启接收中断
+* 2022-05-27       pudding            新增四个总线报错接管，新增总线报错时关闭所有中断及PWM输出
 ********************************************************************************************************************/
 
 #ifndef _zf_common_debug_h_
 #define _zf_common_debug_h_
 
 #include "zf_common_typedef.h"
+#include "zf_common_interrupt.h"
 
 #define DEBUG_UART_INDEX            (UART_0)            // 指定 debug uart 所使用的的串口
 #define DEBUG_UART_BAUDRATE         (115200)            // 指定 debug uart 所使用的的串口波特率
 #define DEBUG_UART_TX_PIN           (UART0_TX_P14_0)    // 指定 debug uart 所使用的的串口引脚
 #define DEBUG_UART_RX_PIN           (UART0_RX_P14_1)    // 指定 debug uart 所使用的的串口引脚
-#define DEBUG_UART_USE_INTERRUPT    (0)                 // 是否启用 debug uart 接收中断
+#define DEBUG_UART_USE_INTERRUPT    (1)                 // 是否启用 debug uart 接收中断
 
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -72,8 +75,12 @@
 // 返回参数     void
 // 备注信息     当触发CPU报错时会通过log信息输出来提醒用户
 //-------------------------------------------------------------------------------------------------------------------
-#define IFX_CFG_CPU_TRAP_BE_HOOK(x)  zf_log(0, "Memory access failure or Use an uninitialized peripheral, please check"); while(1);
-#define IFX_CFG_CPU_TRAP_IPE_HOOK(x) zf_log(0, "Accessing an null address, array access may be out of bounds, please check"); while(1);
+#define IFX_CFG_CPU_TRAP_BE_HOOK(x)     zf_log(0, "Memory access failure or Use an uninitialized peripheral, Locate faults through debugging"); assert_interrupt_config(); while(1);
+#define IFX_CFG_CPU_TRAP_IPE_HOOK(x)    zf_log(0, "Accessing an null address, Locate faults through debugging");                                assert_interrupt_config(); while(1);
+#define IFX_CFG_CPU_TRAP_ASSERT_HOOK(x) zf_log(0, "Cpu Assertion error, Locate faults through debugging");                                      assert_interrupt_config(); while(1);
+#define IFX_CFG_CPU_TRAP_CME_HOOK(x)    zf_log(0, "Context management error, Locate faults through debugging");                                 assert_interrupt_config(); while(1);
+#define IFX_CFG_CPU_TRAP_IE_HOOK(x)     zf_log(0, "Instruction Error, Locate faults through debugging");                                        assert_interrupt_config(); while(1);
+#define IFX_CFG_CPU_TRAP_MME_HOOK(x)    zf_log(0, "Memory management error, Locate faults through debugging");                                  assert_interrupt_config(); while(1);
 
 
 typedef struct
@@ -86,26 +93,27 @@ typedef struct
     uint8 font_x_size;
     uint8 font_y_size;
 
-    void (*output_uart)             (const char *str);
-    void (*output_screen)           (uint16 x, uint16 y, const char *str);
-    void (*output_screen_clear)     (void);
+    void (*output_uart)                (const char *str);
+    void (*output_screen)              (uint16 x, uint16 y, const char *str);
+    void (*output_screen_clear)        (void);
 }debug_output_struct;
 
 
 #if DEBUG_UART_USE_INTERRUPT                                                            // 如果启用 debug uart 接收中断
-#define     DEBUG_RING_BUFFER_LEN   (64)                                                // 定义环形缓冲区大小 默认 64byte
-void        debug_interrupr_handler (void);
-uint32      debug_read_ring_buffer  (uint8 *data);
+#define DEBUG_RING_BUFFER_LEN          (64)                                             // 定义环形缓冲区大小 默认 64byte
+void    debug_interrupr_handler        (void);
+uint32  debug_read_ring_buffer         (uint8 *buff, uint32 len);
 #endif
 
 
-void debug_assert_enable            (void);
-void debug_assert_disable           (void);
-void debug_assert_handler           (uint8 pass, char *file, int line);
-void debug_log_handler              (uint8 pass, char *str, char *file, int line);
-void debug_output_struct_init       (debug_output_struct *info);
-void debug_output_init              (debug_output_struct *info);
-void debug_init                     (void);
+uint32  debug_send_buffer              (const uint8 *buff, uint32 len);                 // 调试串口缓冲区发送
+void    debug_assert_enable            (void);
+void    debug_assert_disable           (void);
+void    debug_assert_handler           (uint8 pass, char *file, int line);
+void    debug_log_handler              (uint8 pass, char *str, char *file, int line);
+void    debug_output_struct_init       (debug_output_struct *info);
+void    debug_output_init              (debug_output_struct *info);
+void    debug_init                     (void);
 
 #endif
 

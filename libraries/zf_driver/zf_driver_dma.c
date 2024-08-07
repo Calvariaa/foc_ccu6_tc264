@@ -24,7 +24,7 @@
 * 文件名称          zf_driver_dma
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -41,7 +41,7 @@
 
 typedef struct
 {
-    Ifx_DMA_CH linked_list[8];              // DMA链表
+    Ifx_DMA_CH linked_list[10];              // DMA链表
     IfxDma_Dma_Channel channel;             // DMA通道句柄
 }DMA_LINK;
 
@@ -67,7 +67,7 @@ IFX_ALIGN(256) DMA_LINK dma_link_list;
 // 使用示例      dma_init(MT9V03X_DMA_CH, MT9V03X_DATA_ADD, mt9v03x_image[0], MT9V03X_PCLK_PIN, EXTI_TRIGGER_RISING, MT9V03X_IMAGE_SIZE);
 // 备注信息
 //-------------------------------------------------------------------------------------------------------------------
-uint8 dma_init (IfxDma_ChannelId dma_ch, uint8 *source_addr, uint8 *destination_addr, exti_pin_enum exti_pin, exti_trigger_enum trigger, uint16 dma_count)
+uint8 dma_init (IfxDma_ChannelId dma_ch, uint8 *source_addr, uint8 *destination_addr, exti_pin_enum exti_pin, exti_trigger_enum trigger, uint32 dma_count)
 {
     IfxDma_Dma_Channel dmaChn;
 
@@ -83,9 +83,9 @@ uint8 dma_init (IfxDma_ChannelId dma_ch, uint8 *source_addr, uint8 *destination_
     IfxDma_Dma_initChannelConfig(&cfg, &dma);
 
     uint8  list_num, i;
-    uint16 single_channel_dma_count;
+    uint32 single_channel_dma_count;
 
-    zf_assert(!(dma_count%8));                  // 传输次数必须为8的倍数
+    zf_assert(!(dma_count % 8));                  // 传输次数必须为8的倍数
 
 
     list_num = 1;
@@ -100,7 +100,7 @@ uint8 dma_init (IfxDma_ChannelId dma_ch, uint8 *source_addr, uint8 *destination_
                 break;
             }
             list_num++;
-            if(list_num > 8)
+            if(list_num > 10)
             {
                 zf_assert(FALSE);
             }
@@ -141,7 +141,7 @@ uint8 dma_init (IfxDma_ChannelId dma_ch, uint8 *source_addr, uint8 *destination_
 
     cfg.destinationAddress              = IFXCPU_GLB_ADDR_DSPR(IfxCpu_getCoreId(), destination_addr);
 
-    cfg.transferCount                   = single_channel_dma_count;
+    cfg.transferCount                   = (uint16)single_channel_dma_count;
 
     IfxDma_Dma_initChannel(&dmaChn, &cfg);
 
@@ -153,13 +153,13 @@ uint8 dma_init (IfxDma_ChannelId dma_ch, uint8 *source_addr, uint8 *destination_
             cfg.destinationAddress      = IFXCPU_GLB_ADDR_DSPR(IfxCpu_getCoreId(), destination_addr + single_channel_dma_count * i);
             if(i == (list_num - 1))
             {
-                cfg.shadowAddress       = IFXCPU_GLB_ADDR_DSPR(IfxCpu_getCoreId(), (unsigned)&dma_link_list.linked_list[0]);
+                cfg.shadowAddress       = IFXCPU_GLB_ADDR_DSPR(IfxCpu_getCoreId(), (uint32)&dma_link_list.linked_list[0]);
             }
             else
             {
-                cfg.shadowAddress       = IFXCPU_GLB_ADDR_DSPR(IfxCpu_getCoreId(), (unsigned)&dma_link_list.linked_list[i+1]);
+                cfg.shadowAddress       = IFXCPU_GLB_ADDR_DSPR(IfxCpu_getCoreId(), (uint32)&dma_link_list.linked_list[i+1]);
             }
-            cfg.transferCount           = single_channel_dma_count;
+            cfg.transferCount           = (uint16)single_channel_dma_count;
 
             IfxDma_Dma_initLinkedListEntry((void *)&dma_link_list.linked_list[i], &cfg);
             i++;

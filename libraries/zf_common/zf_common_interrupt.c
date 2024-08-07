@@ -24,7 +24,7 @@
 * 文件名称          zf_common_interrupt
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -81,5 +81,4 @@ void assert_interrupt_config (void)
     pwm_all_channel_close();                    // 关闭PWM所有通道输出
     exti_all_close();                           // 关闭所有外部触发中断
     interrupt_global_enable(0);                 // 全局中断使能
-
 }

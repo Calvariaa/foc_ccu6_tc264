@@ -24,7 +24,7 @@
 * 文件名称          zf_device_virtual_oscilloscope
 * 公司名称          成都逐飞科技有限公司
 * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
-* 开发环境          ADS v1.8.0
+* 开发环境          ADS v1.9.20
 * 适用平台          TC264D
 * 店铺链接          https://seekfree.taobao.com/
 *
@@ -54,7 +54,7 @@ static uint16 crc_check (uint8 *buff, uint8 crc_cnt)
     for(i = 0; i < crc_cnt; i ++)
     {
         crc_temp ^= buff[i];
-        for(j = 0; j < 8; j ++)
+        for(j = 0; 8 > j; j ++)
         {
             if (crc_temp & 0x01)
             {
