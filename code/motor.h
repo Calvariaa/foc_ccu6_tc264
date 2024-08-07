@@ -21,7 +21,7 @@
  * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
  * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
  *
- * 文件名称          pwm_input
+ * 文件名称          pwm_output
  * 公司名称          成都逐飞科技有限公司
  * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
  * 开发环境          ADS v1.8.0
@@ -33,47 +33,45 @@
  * 2023-02-01       pudding             first version
  ********************************************************************************************************************/
 
-#include "ifxGtm_Tim.h"
-#include "ccu6_pwm.h"
-#include "pwm_input.h"
+#ifndef _PWM_OUTPUT_H_
+#define _PWM_OUTPUT_H_
 
-uint16 pwm_in_duty;
-IfxGtm_Tim_In driver;
-IfxGtm_Tim_In driver_back;
-IfxGtm_Tim_In_Config config;
-IfxGtm_Tim_In_Config config_back;
-uint16 i;
+#include "zf_common_headfile.h"
 
-//-------------------------------------------------------------------------------------------------------------------
-// 函数简介     输入捕获初始化
-// 参数说明
-// 参数说明
-// 使用示例
-// 备注信息
-//-------------------------------------------------------------------------------------------------------------------
-void pwm_input_init(void)
+extern int16 encoder;
+#define MOTOR_SPEED_OUT_PIN (ATOM1_CH6_P00_7) // 电机旋转速度输出引脚
+#define MOTOR_DIR_OUT_PIN (P00_5)             // 电机运行方向输出引脚
+
+
+typedef enum
 {
-    IfxGtm_enable(&MODULE_GTM);
+    FORWARD,    //正转
+    REVERSE,    //反转
+}MOTOR_DIR_enum;
 
-    if (!(MODULE_GTM.CMU.CLK_EN.U & 0x2))
-    {
-        IfxGtm_Cmu_setClkFrequency(&MODULE_GTM, IfxGtm_Cmu_Clk_0, (float)FCY);
-        IfxGtm_Cmu_enableClocks(&MODULE_GTM, IFXGTM_CMU_CLKEN_CLK1);
-    }
+typedef enum
+{
+    MOTOR_DISABLE,  //驱动关闭
+    MOTOR_ENABLE,   //驱动使能
+}MOTOR_EN_STATUS_enum;
 
-    IfxGtm_Tim_In_initConfig(&config, &MODULE_GTM);
-    config.timIndex = IfxGtm_Tim_1;
-    config.channelIndex = IfxGtm_Tim_Ch_6;
-    config.isrPriority = GTM_PWM_IN_PRIORITY;
-    config.capture.irqOnNewVal = TRUE;
-    config.capture.irqOnCntOverflow = TRUE;
-    config.timeout.clock = IfxGtm_Cmu_Clk_0;
-    config.filter.inputPin = &IfxGtm_TIM1_6_TIN6_P02_6_IN;
-    config.filter.inputPinMode = IfxPort_InputMode_pullDown;
-    driver.periodTick = FPWM;
-    IfxGtm_Tim_In_init(&driver, &config);
+typedef struct
+{
+    MOTOR_EN_STATUS_enum en_status; //指示电机使能状态
+    uint8 brake_flag;   //指示当前刹车是否有效    1：正在刹车  0：正常运行
+    MOTOR_DIR_enum  dir;//电机旋转方向 FORWARD：正转  REVERSE：反转     BRAKE：刹车
+    int32 set_speed;    //设置的速度
+    int32 max_speed;    //速度最大值
+    int32 min_speed;    //速度最小值
+}motor_struct;
 
-    gpio_init(MOTOR_DIR_IN_PIN, GPI, 0, GPI_PULL_DOWN); // 初始化方向设置引脚
+extern motor_struct motor_control;
+extern int16    duty;           //PWM占空比初值
 
-    // TIM_InitConfig(IfxGtm_TIM1_6_TIN6_P02_6_IN);
-}
+
+// void motor_init(void);
+void motor_information_out_init(void);
+void motor_set_dir(void);
+void motor_dir_out(void);
+void motor_speed_out(void);
+#endif /* CODE_PWM_OUTPUT_H_ */

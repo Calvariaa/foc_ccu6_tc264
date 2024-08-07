@@ -39,26 +39,15 @@
 #include "zf_common_headfile.h"
 #include "zf_driver_gpio.h"
 
-// #define MOTOR_DIR_IN_PIN    P11_3
-// #define MOTOR_PWM_IN_PIN    P11_2
-
 #define MOTOR_DIR_IN_PIN P02_7
 #define MOTOR_PWM_IN_PIN P02_6
 
-#define MOTOR_back_DIR_IN_PIN P21_3
-#define MOTOR_back_PWM_IN_PIN P21_4
 
-#define GTM_PWM_IN_PRIORITY 80      // 输入捕获中断优先级
-#define GTM_PWM_IN_PRIORITY_back 70 // 输入捕获中断优先级
 extern uint16 i;
 extern uint16 pwm_in_duty;
 extern IfxGtm_Tim_In driver;
 extern IfxGtm_Tim_In_Config config;
-extern uint16 pwm_in_duty_back;
-extern IfxGtm_Tim_In driver_back;
-extern IfxGtm_Tim_In_Config config_back;
+
 void pwm_input_init(void);
-void pwm_back_input_init(void);
-void TIM_InitConfig(IfxGtm_Tim_TinMap pin);
-void TIM_GetPwm(IfxGtm_Tim_TinMap pin, float32 *Duty);
+
 #endif

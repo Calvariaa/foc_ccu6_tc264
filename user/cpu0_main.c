@@ -57,64 +57,37 @@ int core0_main(void)
     move_filter_double_init(&iq_ref_filter); // 滑动滤波初始化
 
     // 初始化输出速度与方向信息的引脚
-    //  motor_information_out_init();
+    motor_information_out_init();
 
     // 输入信号捕获初始化
     pwm_input_init();
 
-    // 电机初始化
-    // motor_init();
-
     // PID参数初始化
     // closed_loop_pi_init();
+
     AS5407P_Init();
+
     // 初始化定时器,用于输出互补PWM
     ccu6_pwm_init();
+
+    // 初始化定时器,用于计算占空比
+    pit_ms_init(CCU60_CH1, 5);
 
     // 此处编写用户代码 例如外设初始化代码等
     cpu_wait_event_ready(); // 等待所有核心初始化完毕
 
     while (TRUE)
     {
-        // data_send[0]=(uint16) hall_value_now;
-        //                data_send[0]=(uint16) clark.Alpha;
-        //                data_send[1]=(uint16) clark.Beta;
-        //                data_send[2]=(uint16) park.id_ref;
-        //                data_send[3]=(uint16) park.iq_ref;
-        // data_send[4]=(uint16)adc_information.current_a;
-        //   data_send[5]=(uint16)adc_information.current_b;
-        //  data_send[6]=(uint16)adc_information.current_c;
-        // Data_Send(UART_0,data_send);
-        // data_send[4]=(uint16)adc_information.current_a;
-        //   data_send[5]=(uint16)adc_information.current_b;
-        // data_send[6]=(uint16)adc_information.current_c;
-        // buff1[0]=0x3FFF;
-        // buff1[0]=0x3FFF;
         led_output(); // 根据当前状态点亮或者熄灭LED灯
-        // Get_Rotor_Angle();
-        //  AS5047P_TEST_PRINTF();
-        //////////////////////////////////////////
-        // DUZHI();
-        // data_send[0]=(uint16) (Get_Rotor_Angle());
-        // data_send[1]=date_cibianmaqi[1];
-        //  data_send[2]=date_cibianmaqi[2];
-        // data_send[3]=date_cibianmaqi[3];
-        /// data_send[4]=date_cibianmaqi[4];
-        // data_send[5]=date_cibianmaqi[5];
-        // data_send[6]=date_cibianmaqi[6];
-        // data_send[7]=date_cibianmaqi[7];
-
-        // Data_Send(UART_0, data_send); // 串口
 
         data_send[0] = (float)theta;
+        data_send[4] = (float)pwm_in_duty;
+
+        pwm_set_freq(MOTOR_SPEED_OUT_PIN, 50, 5000);
+        
         for (int8 i = 0; i <= 10; i++)
             printf("%f,", data_send[i]);
         printf("-1.0\r\n");
-
-        //////////////////////////////////////////////////////////////
-        // 发送数据到虚拟示波器 虚拟示波器下载链接 https://pan.baidu.com/s/198CMXTZsbI3HAEqNXDngBw
-        //        data_conversion((uint16)speed_filter.data_average, pwm_in_duty, hall_value_now, duty, virtual_scope_data);
-        //        uart_write_buffer(UART_0, virtual_scope_data, sizeof(virtual_scope_data));  //数据转换完成后，使用串口发送将数组的内容发送出去
     }
 }
 

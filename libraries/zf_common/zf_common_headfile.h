@@ -119,6 +119,7 @@
 #include "cos_sin.h"
 #include "foc.h"
 #include "gpio.h"
+#include "motor.h"
 #include "move_filter.h"
 #include "pwm_input.h"
 //===================================================无刷驱动用户层===================================================

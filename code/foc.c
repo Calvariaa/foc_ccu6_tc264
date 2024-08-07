@@ -9,6 +9,9 @@
 #include "foc.h"
 #include "as5047p.h"
 #include "move_filter.h"
+
+#pragma section all "cpu1_dsram"
+
 // double theta2;
 
 // look都是用于上位机查看波形
@@ -19,7 +22,7 @@ float look4;
 float look5;
 float look6;
 
-int qidong = 0;
+int slow_startup_count = 0;
 int dianliu = 0;
 
 float error_sum_d = 0;
@@ -237,25 +240,25 @@ ipark_variable Current_Close_Loop(ipark_variable ref_park, park_variable I_park)
     ipark_variable Park_in;
     float error_d, error_q;
 
-    // int qidong = 0;
+    // int slow_startup_count = 0;
 
     float kp_foc_id = 120;  // 10
     float ki_foc_id = 0.08; // 0.06
     float kp_foc_iq = 7;    // 20
     float ki_foc_iq = 0.08; // 0.06
-    // if(qidong<=100000)
+    // if(slow_startup_count<=100000)
     //{
-    // qidong++;
+    // slow_startup_count++;
     // }
-    // if(qidong>=100000)
+    // if(slow_startup_count>=100000)
     //{
     //     kp_foc_id = 7;
     //     ki_foc_id = 0.17;
     //     kp_foc_iq = 7;    ///计时，防止未打开开关前积分累加
     //     ki_foc_iq = 0.17;
-    //     qidong = 199999;
+    //     slow_startup_count = 199999;
     // }
-    // if(qidong<100000)
+    // if(slow_startup_count<100000)
     //{
     //      kp_foc_id = 0;
     //      ki_foc_id = 0;
@@ -348,13 +351,13 @@ float ang = 0;
 clark_variable adcd_struct;
 park_variable I_out;
 ipark_variable Park_in;
-void sum_cacl()
+void foc_commutation()
 {
-    if (qidong <= 200000)
+    if (slow_startup_count <= 200000)
     {
-        qidong++;
+        slow_startup_count++;
     }
-    if (qidong >= 100000)
+    if (slow_startup_count >= 100000)
     {
         // dianliu++;
 
@@ -364,18 +367,13 @@ void sum_cacl()
         if (ang >= 360.f)
             ang = 0.f;
         theta = ANGLE_TO_RAD((int16)ang);
+
 #ifdef CURRENTLOOP
 
         adc_read();
         data_send[1] = (float)adc_information.current_a;
         data_send[2] = (float)adc_information.current_b;
         data_send[3] = (float)adc_information.current_c;
-
-        // ipark_variable U_out;
-        // out_variable    svpwm_in;
-        // svpwm_in        tool_in;
-        // svpwm_out     mos_in;
-        // svpwm_out  svpwm_out;
 
         /*----------*/
         adcd_struct = clark_cacl(adc_information);
@@ -391,7 +389,7 @@ void sum_cacl()
         // data_send[4]=(int16)  I_out.iq_ref*1000;
         FOC_S.Ref_Park.u_d = 0;
         FOC_S.Ref_Park.u_q = 0.3; // 期望值
-        if (qidong >= 200000)
+        if (slow_startup_count >= 200000)
         {
             FOC_S.Ref_Park.u_q = 0.2; // 期望值//0.01
         }
@@ -403,7 +401,7 @@ void sum_cacl()
 #else
         // 开环
         Park_in.u_d = 0;
-        Park_in.u_q = 6;
+        Park_in.u_q = 4; // 6
 
 #endif
 
@@ -414,36 +412,10 @@ void sum_cacl()
         FOC_S.Vector = Vector_Calc(FOC_S.tool, FOC_S.N, BUS_VOLTAGE, PWM_PRIOD_LOAD); // 矢量作用时间计算
         FOC_S.Period = PeriodCal(FOC_S.Vector, FOC_S.N, PWM_PRIOD_LOAD);              // 各桥PWM占空比计算
         Mos_All_High_Open(FOC_S.Period.AH, FOC_S.Period.BH, FOC_S.Period.CH);
-        data_send[8] = (float)FOC_S.Period.AH;
-        data_send[9] = (float)FOC_S.Period.BH;
-        data_send[10] = (float)FOC_S.Period.CH;
-
-        // look3 = theta*1000;
-
-        // look5 =error_q*10000;
-        // look6 =Park_in.u_d*10000;
-
-        // look4 =look1;
-
-        // look5 =
-        //  look1 = FOC_S.Period.BH;
-        // look2 = FOC_S.Period.CH;
-        //   look3 =FOC_S.Period.AH;
-        //
-        //  look6 = adc_information.current_a*10000;
-        //  look4 = adc_information.current_b*10000*10/9;
-        // //  look5 = adc_information.current_c*10000;
-
-        // data_send[0] = (int16)look1;
-        // data_send[1] = (int16)look2;
-        // data_send[2] = (int16)look3;
-        // data_send[3] = (int16)look4;
-        // data_send[4] = (int16)look5;
-        // data_send[5] = (int16)look6;
-
-        // data_send[2]=(int16)adc_information.current_c;
-
-        // data_send[5]=(uint16)FOC_S.Period.AH;
-        // data_send[6]=(uint16)FOC_S.Period.AH;
+        data_send[1] = (float)FOC_S.Period.AH;
+        data_send[2] = (float)FOC_S.Period.BH;
+        data_send[3] = (float)FOC_S.Period.CH;
     }
 }
+
+#pragma section all restore

@@ -47,7 +47,6 @@ IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
     // 霍尔扫描
     // scan_hall_status();
     //  spi_mosi(SPI_0,SPI0_CS2_P20_13,buff666,buf666,1,1);
-    sum_cacl();
 
     //  spi_write_16bit_register(SPI_0, 0x3FFF, 0x3FFF);
     //  spi_read_16bit_register(SPI_0, 0x3FFF);
@@ -60,6 +59,8 @@ IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
     //        commutation_delay = 0;
     //        motor_commutation(next_hall_value);
     //    }
+
+    foc_commutation();
 }
 
 // **************************** PIT中断函数 ****************************
@@ -67,6 +68,62 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU60_CH0);
+
+    //	scan_hall_status();
+    //	hall_change();
+    //	key_scan();     //按键扫描
+
+    //    //通过速度输出引脚输出当前速度and dir
+    // motor_speed_out();
+
+    //
+    //    #if BLDC_CLOSE_LOOP_ENABLE
+    //    //根据接收到的信号，去计算出需要设置的速度值
+    //        if(model_state) motor_control.set_speed = motor_control.max_speed * adc_information.current_board/4096;
+    //        else motor_control.set_speed = motor_control.max_speed * pwm_in_duty/PWM_PRIOD_LOAD;
+    //        //进行PI闭环计算
+    //        if(motor_control.dir == FORWARD)
+    //            duty = (int16)closed_loop_pi_calc((float)(motor_control.set_speed - speed_filter.data_average));
+    //        else
+    //            duty = (int16)closed_loop_pi_calc((float)(motor_control.set_speed + speed_filter.data_average));
+    //    #else
+    //        if(model_state) duty = adc_information.current_board*PWM_PRIOD_LOAD/4096;
+    //        else duty=pwm_in_duty;
+    //    #endif
+}
+
+// 输入捕获
+int8 new_data_filter = 0;
+IFX_INTERRUPT(gtm_pwm_in, 0, GTM_PWM_IN_PRIORITY)
+{
+    IfxGtm_Tim_In_update(&driver);
+
+    if (FALSE == driver.newData)
+    {
+        if (gpio_get_level(MOTOR_PWM_IN_PIN))
+        {
+            if (new_data_filter > 0)
+            {
+                new_data_filter--;
+            }
+            else
+            {
+                driver.periodTick = 20000;
+                driver.pulseLengthTick = driver.periodTick;
+            }
+        }
+        else
+        {
+            new_data_filter = 3;
+            driver.periodTick = 20000;
+            driver.pulseLengthTick = 0;
+        }
+    }
+    else
+    {
+        new_data_filter = 0;
+    }
+    pwm_in_duty = (uint16)func_limit_ab((driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick), 0, PWM_PRIOD_LOAD);
 }
 
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)

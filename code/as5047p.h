@@ -4,7 +4,7 @@
 #include "zf_common_headfile.h"
 
 // 各模式开启控制开关
-#define AS5047P_ABI_Part_EN 1
+#define AS5047P_ABI_Part_EN
 #define angle_offset 0.1;
 
 #define MAX_BAUD 50000000
@@ -69,10 +69,10 @@
 #define AS5047P_SPI_R (1 << 14)
 #define AS5047P_SPI_W (0) //( 0 << 14)
 
-#if AS5047P_ABI_Part_EN
+#ifdef AS5047P_ABI_Part_EN
 #define AS5047P_TIM (TIM4_ENCODER)
 #define AS5047P_B (TIM4_ENCODER_CH1_P02_8) // 接模块B
-#define AS5047P_A (TIM5_ENCODER_CH2_P10_1) // 接模块A
+#define AS5047P_A (TIM4_ENCODER_CH2_P00_9) // 接模块A
 #endif
 
 double Get_Rotor_Angle(void);
