@@ -346,6 +346,15 @@ void Mos_All_High_Open(uint16 periodAH, uint16 periodBH, uint16 periodCH)
     IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_2, periodCH); // 设置比较值
     IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);                  // 使能
 }
+void mos_close()
+{
+    ccu6SFR->MODCTR.B.T12MODEN = 0x2A;
+
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_0, 0);
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_1, 0);
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_2, 0);
+    IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);
+}
 
 float ang = 0;
 clark_variable adcd_struct;
@@ -355,9 +364,11 @@ void foc_commutation()
 {
     if (slow_startup_count <= 200000)
     {
+        // mos_close();
         slow_startup_count++;
     }
     if (slow_startup_count >= 100000)
+    // if (0)
     {
         // dianliu++;
 
@@ -401,7 +412,7 @@ void foc_commutation()
 #else
         // 开环
         Park_in.u_d = 0;
-        Park_in.u_q = 4; // 6
+        Park_in.u_q = 6; // 6
 
 #endif
 
