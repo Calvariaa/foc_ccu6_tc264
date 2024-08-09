@@ -14,13 +14,6 @@
 
 // double theta2;
 
-// look都是用于上位机查看波形
-float look1;
-float look2;
-float look3;
-float look4;
-float look5;
-float look6;
 
 int slow_startup_count = 0;
 int dianliu = 0;
@@ -28,7 +21,7 @@ int dianliu = 0;
 float error_sum_d = 0;
 float error_sum_q = 0;
 
-extern float data_send[8];
+extern float data_send[16];
 //-------------------------------------------------------------------------------------------------------------------
 //  @brief      克拉克变换
 //  @param      void
@@ -269,8 +262,10 @@ ipark_variable Current_Close_Loop(ipark_variable ref_park, park_variable I_park)
     // }
     error_d = FOC_S.Ref_Park.u_d - I_park.id_ref;
     error_q = FOC_S.Ref_Park.u_q - I_park.iq_ref;
-    look5 = error_d * 10000;
-    look6 = error_q * 10000; // look1-5都是用于上位机查看波形
+
+    // look5 = error_d * 10000;
+    // look6 = error_q * 10000; // look1-5都是用于上位机查看波形
+
     // look4 = (error_q)*10000;
     // look3 =I_park.id_ref*10000;
     error_sum_d = error_sum_d + error_d;
@@ -285,7 +280,7 @@ ipark_variable Current_Close_Loop(ipark_variable ref_park, park_variable I_park)
     if (error_sum_q < -70)
         error_sum_q = -70; // 积分限幅
     //  look5 =error_sum_d*100;
-    // look6 =error_sum_q*100; //look1-5都是用于上位机查看波形
+    // look6 =error_sum_q*100;
     Park_in.u_d = kp_foc_id * error_d + ki_foc_id * error_sum_d;
     Park_in.u_q = kp_foc_iq * error_q + ki_foc_iq * error_sum_q;
     if (Park_in.u_d >= 4)
@@ -372,7 +367,7 @@ void foc_commutation()
     {
         // dianliu++;
 
-        // Get_Rotor_Angle();
+        // get_rotor_angle();
         // test
         ang += 0.01;
         if (ang >= 360.f)

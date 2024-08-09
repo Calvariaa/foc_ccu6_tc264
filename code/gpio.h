@@ -39,9 +39,9 @@
 #include "zf_common_headfile.h"
 #include "zf_driver_gpio.h"
 
-#define LED_ERR_PIN (P20_6)   // 故障指示灯
-#define LED_RUN_PIN (P20_4)   // 运行指示灯
-#define LED_MODEL_PIN (P20_5) // 模式指示灯
+#define LED_ERR_PIN (P21_4)   // 故障指示灯
+#define LED_RUN_PIN (P21_5)   // 运行指示灯
+// #define LED_MODEL_PIN (P21_5) // 模式指示灯
 #define EN_PIN (P15_0)        // 使能引脚
 // #define EN_FSOI_PIN (P20_10)  // 刹车引脚
 

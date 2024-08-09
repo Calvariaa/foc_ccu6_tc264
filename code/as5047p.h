@@ -75,9 +75,8 @@
 #define AS5047P_A (TIM4_ENCODER_CH2_P00_9) // ½ÓÄ£¿éA
 #endif
 
-double Get_Rotor_Angle(void);
-// float Brushless_Motor_Speed(void);
-void AS5047P_TEST_PRINTF(void);
-void AS5407P_Init(void);
+double get_rotor_angle(void);
+void as5047p_printf_test(void);
+void as5047p_init(void);
 extern double theta;
 #endif /*_AS5047P_H*/

@@ -36,7 +36,7 @@
 #pragma section all "cpu0_dsram"
 // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
-float data_send[8];
+float data_send[16];
 // **************************** 代码区域 ****************************
 int core0_main(void)
 {
@@ -65,7 +65,7 @@ int core0_main(void)
     // PID参数初始化
     // closed_loop_pi_init();
 
-    AS5407P_Init();
+    as5047p_init();
 
     // 初始化定时器,用于输出互补PWM
     ccu6_pwm_init();

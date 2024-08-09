@@ -45,10 +45,10 @@ uint8 key_flag;        // 按键触发标志位
 
 void led_init(void)
 {
-    gpio_init(LED_RUN_PIN, GPO, 1, GPO_PUSH_PULL);   // 初始化运行指示灯
-    gpio_init(LED_ERR_PIN, GPO, 1, GPO_PUSH_PULL);   // 初始化报错指示灯
-    gpio_init(LED_MODEL_PIN, GPO, 1, GPO_PUSH_PULL); // 初始化运行指示灯
-    gpio_init(EN_PIN, GPI, 1, GPI_PULL_UP);          // 初始化运行指示灯
+    gpio_init(LED_RUN_PIN, GPO, 1, GPO_PUSH_PULL);  
+    gpio_init(LED_ERR_PIN, GPO, 1, GPO_PUSH_PULL);  
+    // gpio_init(LED_MODEL_PIN, GPO, 1, GPO_PUSH_PULL); 
+    gpio_init(EN_PIN, GPI, 1, GPI_PULL_UP);       
 }
 
 void led_output(void)
@@ -67,12 +67,12 @@ void led_output(void)
             gpio_set_level(LED_RUN_PIN, 1); // 关闭运行灯
     }
     // if (model_state)
-    if (0)
-    {
-        gpio_set_level(LED_MODEL_PIN, 1);
-    }
-    else
-    {
-        gpio_set_level(LED_MODEL_PIN, 0);
-    }
+    // if (0)
+    // {
+    //     gpio_set_level(LED_MODEL_PIN, 1);
+    // }
+    // else
+    // {
+    //     gpio_set_level(LED_MODEL_PIN, 0);
+    // }
 }

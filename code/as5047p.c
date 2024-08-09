@@ -294,7 +294,7 @@ void AS5047_R_Reg(uint16 cmd, uint16 *val)
 //  @return     转子角度（弧度）
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
-double Get_Rotor_Angle(void)
+double get_rotor_angle(void)
 {
     uint16 val;
     double reval;
@@ -341,7 +341,7 @@ void AS5047P_Configuration(void)
 ////  @return     void
 ////  @since      调试时放在main.c使用，不使用时记得关闭
 ////-------------------------------------------------------------------------------------------------------------------
-void AS5047P_TEST_PRINTF(void)
+void as5047p_printf_test(void)
 {
     uint16 val;
     AS5047_R_Reg(AS5047P_ANGLECOM, &val);
@@ -361,7 +361,7 @@ void AS5047P_ABI_MODE_Init(void)
 }
 #endif
 
-void AS5407P_Init(void)
+void as5047p_init(void)
 {
     AS5047P_SPI_Init();
     AS5047P_Configuration();
