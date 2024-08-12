@@ -75,8 +75,11 @@
 #define AS5047P_A (TIM4_ENCODER_CH2_P00_9) // ½ÓÄ£¿éA
 #endif
 
-double get_rotor_angle(void);
+uint16 get_val();
+double get_global_angle(uint16 val);
+double get_rotor_angle(uint16 val);
 void as5047p_printf_test(void);
 void as5047p_init(void);
 extern double theta;
+extern uint16 theta_val;
 #endif /*_AS5047P_H*/

@@ -12,7 +12,7 @@
 
 #pragma section all "cpu1_dsram"
 
-// double theta2;
+ // double theta2;
 
 
 int slow_startup_count = 0;
@@ -363,16 +363,24 @@ void foc_commutation()
         slow_startup_count++;
     }
     if (slow_startup_count >= 100000)
-    // if (0)
+        // if (0)
     {
         // dianliu++;
+        theta_val = get_val();
+        theta = get_rotor_angle(theta_val);
 
-        // get_rotor_angle();
+        data_send[6] = theta;
+        data_send[7] = (float)RAD_TO_ANGLE(get_global_angle(theta_val));
+        data_send[8] = RAD_TO_ANGLE(data_send[6]);
         // test
-        ang += 0.01;
-        if (ang >= 360.f)
-            ang = 0.f;
-        theta = ANGLE_TO_RAD((int16)ang);
+
+        // ang += 0.4;
+        // if (ang >= 360.f)
+        //     ang = 0.f;
+
+        // theta = ANGLE_TO_RAD((int16)ang);
+
+        // data_send[8] = data_send[6] - theta;
 
 #ifdef CURRENTLOOP
 

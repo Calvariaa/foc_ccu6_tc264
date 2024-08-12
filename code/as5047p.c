@@ -5,6 +5,7 @@
 
 uint16 view;
 double theta;
+uint16 theta_val;  // 磁编的原始输出
 
 //-------------------------------------------------------------------------------------------------------------------
 //  函数简介      spi_init_16初始化
@@ -294,21 +295,43 @@ void AS5047_R_Reg(uint16 cmd, uint16 *val)
 //  @return     转子角度（弧度）
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
-double get_rotor_angle(void)
+#define REVAL_DIFF 0.92
+
+uint16 get_val()
 {
     uint16 val;
     double reval;
     AS5047_R_Reg(AS5047P_ANGLECOM, &val);
     val &= 0x3FFF;
+
+    return val;
+}
+
+double get_global_angle(uint16 val)
+{
+    double reval;
     // theta = val*360/16384;
-    val = val % 2340;
-    reval = (double)val / 2340 * pi_2;
-    reval -= 5.05; // 2.67
+    val = val % 16384;
+    reval = (double)val / 16384 * pi_2;
+    reval -= REVAL_DIFF;
     if (reval < 0)
     {
         reval += pi_2;
     }
-    theta = reval;
+    return reval;
+}
+
+double get_rotor_angle(uint16 val)
+{
+    double reval;
+    // theta = val*360/16384;
+    val = val % 2340;
+    reval = (double)val / 2340 * pi_2;
+    reval -= REVAL_DIFF;
+    if (reval < 0)
+    {
+        reval += pi_2;
+    }
     return reval;
 }
 ////-------------------------------------------------------------------------------------------------------------------
