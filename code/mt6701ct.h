@@ -28,7 +28,7 @@
 // #define MT6701CT_ANGLEUNC 0x3FFE //
 // #define MT6701CT_ANGLECOM 0x3FFF // 存放具有动态角度误差补偿角度信息的寄存器地址
 
-// double get_rotor_angle_mt(void);
+// double get_elec_angle_mt(void);
 // void mt6701ct_printf_test(void);
 // void mt6701ct_init(void);
 

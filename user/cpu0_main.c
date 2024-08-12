@@ -36,7 +36,7 @@
 #pragma section all "cpu0_dsram"
  // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
-float data_send[16];
+float data_send[32];
 // **************************** 代码区域 ****************************
 int core0_main(void)
 {
@@ -87,7 +87,7 @@ int core0_main(void)
         // pwm_set_freq(MOTOR_SPEED_OUT_PIN, 50, 5000);
         if (slow_startup_count >= 120000)
         {
-            for (int8 i = 0; i <= 10; i++)
+            for (int8 i = 0; i <= 16; i++)
                 printf("%f,", data_send[i]);
             printf("-1.0\r\n");
         }

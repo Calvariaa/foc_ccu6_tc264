@@ -298,7 +298,7 @@ void AS5047_R_Reg(uint16 cmd, uint16* val)
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
 double zero_val = -5.88;
-extern float data_send[16];
+extern float data_send[32];
 
 uint16 get_magnet_val()
 {
@@ -309,7 +309,7 @@ uint16 get_magnet_val()
     return val;
 }
 
-double get_global_angle(uint16 val)
+double get_magnet_angle(uint16 val)
 {
     double reval;
     val = val % 16384;
@@ -322,7 +322,7 @@ double get_global_angle(uint16 val)
     return reval;
 }
 
-double get_rotor_angle(uint16 val)
+double get_elec_angle(uint16 val)
 {
     double reval;
     val = val % 2341;
@@ -334,6 +334,25 @@ double get_rotor_angle(uint16 val)
     }
     return reval;
 }
+
+double calc_elec_angle_by_magnet(double reval)
+{
+    reval = fmod(reval * 7, pi_2);
+    reval += zero_val;
+    if (reval < 0)
+    {
+        reval += pi_2;
+    }
+    return reval;
+}
+
+// 归一化角度
+float _normalizeAngle(float angle)
+{
+	float a = fmod(angle, pi_2);
+	return a >= -pi ? a : (a + pi_2);
+}
+
 ////-------------------------------------------------------------------------------------------------------------------
 //  @brief      设置零位角度
 //  @param      none

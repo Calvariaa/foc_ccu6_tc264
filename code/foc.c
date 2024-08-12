@@ -21,7 +21,7 @@ int dianliu = 0;
 float error_sum_d = 0;
 float error_sum_q = 0;
 
-extern float data_send[16];
+extern float data_send[32];
 //-------------------------------------------------------------------------------------------------------------------
 //  @brief      克拉克变换
 //  @param      void
@@ -351,6 +351,8 @@ void mos_close()
     IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);
 }
 
+#define TESTMODE
+
 float ang = 0;
 clark_variable adcd_struct;
 park_variable I_out;
@@ -364,21 +366,12 @@ void foc_commutation()
     if (slow_startup_count >= 100000)
     {
         theta_val = get_magnet_val();
-        theta_elec = get_rotor_angle(theta_val);
-        theta_magnet = get_global_angle(theta_val);
+        theta_elec = get_elec_angle(theta_val);
+        theta_magnet = get_magnet_angle(theta_val);
 
         data_send[6] = (float)theta_elec;
         data_send[7] = (float)RAD_TO_ANGLE(theta_elec);
         data_send[8] = (float)RAD_TO_ANGLE(theta_magnet);
-        // test
-
-        // ang += 0.04;
-        // if (ang >= 360)
-        //     ang -= 360;
-        // if (ang < -360)
-        //     ang += 360;
-
-        // data_send[9] = theta - data_send[6];
 
 #ifdef CURRENTLOOP
 
@@ -410,22 +403,42 @@ void foc_commutation()
 
         data_send[6] = Park_in.u_q * 1000;
         data_send[7] = Park_in.u_d * 1000;
-#else
-        // 开环
-        Park_in.u_d = 0;
-
-        // Park_in.u_q = 2; // 6
-
-        ang += 0.04;
+#elif defined TESTMODE
+        // test
+        ang += 0.8;
         if (ang >= 360)
             ang -= 360;
         if (ang < -360)
             ang += 360;
 
-        Park_in.u_q = pid_solve(&servo_pid, ANGLE_TO_RAD(0) - theta_magnet + pi) / 1000.f;
-        data_send[9] = (float)Park_in.u_q;
+        Park_in.u_d = 0;
+        Park_in.u_q = 2;
 
-        // data_send[10] = (float)(theta_elec - fmod(theta_magnet * 7, pi_2));
+        data_send[9] = _normalizeAngle(ANGLE_TO_RAD(ang) - theta_elec);
+        data_send[10] = Park_in.u_q;
+        FOC_S.V_Clark = iPark_Calc(Park_in, -ANGLE_TO_RAD(ang));
+#else
+        // 开环
+        // ang += 0.001;
+        // if (ang >= 360)
+        //     ang -= 360;
+        // if (ang < -360)
+        //     ang += 360;
+
+        Park_in.u_d = 0;
+        // Park_in.u_q = 2; // 6
+        Park_in.u_q = pid_solve(&servo_pid, _normalizeAngle(ANGLE_TO_RAD(0) - theta_magnet)) / 1000.f;
+        // Park_in.u_q = pid_solve(&servo_pid, _normalizeAngle(ANGLE_TO_RAD(ang) - theta_magnet)) / 1000.f;
+        // data_send[9] = (float)_normalizeAngle(ANGLE_TO_RAD(ang) - theta_magnet);
+
+        data_send[9] = (float)(calc_elec_angle_by_magnet(theta_magnet));
+        data_send[10] = (float)_normalizeAngle(ANGLE_TO_RAD(0) - theta_magnet);
+        data_send[11] = (float)Park_in.u_q;
+        data_send[12] = (float) ANGLE_TO_RAD(0) - theta_elec;
+        data_send[13] = (float) calc_elec_angle_by_magnet(ANGLE_TO_RAD(0) - theta_magnet);
+
+
+        FOC_S.V_Clark = iPark_Calc(Park_in, calc_elec_angle_by_magnet(ANGLE_TO_RAD(0) - theta_magnet));
 
 #endif
         // theta = pid_solve(&servo_pid, theta_elec); // 6
@@ -440,7 +453,6 @@ void foc_commutation()
         // theta = ANGLE_TO_RAD((int16)ang);
 
         // FOC_S.V_Clark = iPark_Calc(Park_in, 0 - theta);
-        FOC_S.V_Clark = iPark_Calc(Park_in, ANGLE_TO_RAD(0) - theta_elec);
 
         FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
         FOC_S.N = Electrical_Sector_Judge(FOC_S.tool);                                // 电角度扇区判断

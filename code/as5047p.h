@@ -76,8 +76,10 @@
 #endif
 
 uint16 get_magnet_val();
-double get_global_angle(uint16 val);
-double get_rotor_angle(uint16 val);
+double get_magnet_angle(uint16 val);
+double get_elec_angle(uint16 val);
+double calc_elec_angle_by_magnet(double reval);
+float _normalizeAngle(float angle);
 void as5047p_printf_test(void);
 void as5047p_init(void);
 extern double theta;
