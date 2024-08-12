@@ -34,7 +34,7 @@
  ********************************************************************************************************************/
 #include "zf_common_headfile.h"
 #pragma section all "cpu0_dsram"
-// 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
+ // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
 float data_send[16];
 // **************************** 代码区域 ****************************
@@ -85,10 +85,12 @@ int core0_main(void)
         data_send[5] = (float)motor_control.current_speed;
 
         // pwm_set_freq(MOTOR_SPEED_OUT_PIN, 50, 5000);
-
-        for (int8 i = 0; i <= 10; i++)
-            printf("%f,", data_send[i]);
-        printf("-1.0\r\n");
+        if (slow_startup_count >= 120000)
+        {
+            for (int8 i = 0; i <= 10; i++)
+                printf("%f,", data_send[i]);
+            printf("-1.0\r\n");
+        }
     }
 }
 

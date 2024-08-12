@@ -359,28 +359,26 @@ void foc_commutation()
 {
     if (slow_startup_count <= 200000)
     {
-        // mos_close();
         slow_startup_count++;
     }
     if (slow_startup_count >= 100000)
-        // if (0)
     {
-        // dianliu++;
-        theta_val = get_val();
-        theta = get_rotor_angle(theta_val);
+        theta_val = get_magnet_val();
+        theta_elec = get_rotor_angle(theta_val);
+        theta_magnet = get_global_angle(theta_val);
 
-        data_send[6] = theta;
-        data_send[7] = (float)RAD_TO_ANGLE(get_global_angle(theta_val));
-        data_send[8] = RAD_TO_ANGLE(data_send[6]);
+        data_send[6] = (float)theta_elec;
+        data_send[7] = (float)RAD_TO_ANGLE(theta_elec);
+        data_send[8] = (float)RAD_TO_ANGLE(theta_magnet);
         // test
 
-        // ang += 0.4;
-        // if (ang >= 360.f)
-        //     ang = 0.f;
+        // ang += 0.04;
+        // if (ang >= 360)
+        //     ang -= 360;
+        // if (ang < -360)
+        //     ang += 360;
 
-        // theta = ANGLE_TO_RAD((int16)ang);
-
-        // data_send[8] = data_send[6] - theta;
+        // data_send[9] = theta - data_send[6];
 
 #ifdef CURRENTLOOP
 
@@ -415,17 +413,43 @@ void foc_commutation()
 #else
         // 开环
         Park_in.u_d = 0;
-        Park_in.u_q = 6; // 6
+
+        // Park_in.u_q = 2; // 6
+
+        ang += 0.04;
+        if (ang >= 360)
+            ang -= 360;
+        if (ang < -360)
+            ang += 360;
+
+        Park_in.u_q = pid_solve(&servo_pid, ANGLE_TO_RAD(0) - theta_magnet + pi) / 1000.f;
+        data_send[9] = (float)Park_in.u_q;
+
+        // data_send[10] = (float)(theta_elec - fmod(theta_magnet * 7, pi_2));
 
 #endif
+        // theta = pid_solve(&servo_pid, theta_elec); // 6
+        // test
 
-        FOC_S.V_Clark = iPark_Calc(Park_in, theta);
+        // ang += pid_solve(&servo_pid, 0 - theta_elec);
+        // if (ang >= 360) ang -= 360;
+        // if (ang < -360)ang += 360;
+
+        // data_send[9] = (float)ang;
+
+        // theta = ANGLE_TO_RAD((int16)ang);
+
+        // FOC_S.V_Clark = iPark_Calc(Park_in, 0 - theta);
+        FOC_S.V_Clark = iPark_Calc(Park_in, ANGLE_TO_RAD(0) - theta_elec);
 
         FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
         FOC_S.N = Electrical_Sector_Judge(FOC_S.tool);                                // 电角度扇区判断
+
+
         FOC_S.Vector = Vector_Calc(FOC_S.tool, FOC_S.N, BUS_VOLTAGE, PWM_PRIOD_LOAD); // 矢量作用时间计算
         FOC_S.Period = PeriodCal(FOC_S.Vector, FOC_S.N, PWM_PRIOD_LOAD);              // 各桥PWM占空比计算
         Mos_All_High_Open(FOC_S.Period.AH, FOC_S.Period.BH, FOC_S.Period.CH);
+
         data_send[1] = (float)FOC_S.Period.AH;
         data_send[2] = (float)FOC_S.Period.BH;
         data_send[3] = (float)FOC_S.Period.CH;

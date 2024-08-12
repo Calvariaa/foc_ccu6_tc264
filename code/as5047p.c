@@ -5,6 +5,8 @@
 
 uint16 view;
 double theta;
+double theta_elec;
+double theta_magnet;
 uint16 theta_val;  // 磁编的原始输出
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -28,7 +30,7 @@ void spi_16_init(spi_index_enum spi_n, spi_sck_pin_enum sck_pin, spi_mosi_pin_en
     IfxQspi_SpiMaster_Channel MasterChHandle;
     IfxQspi_SpiMaster_Pins MasterPins;
     IfxQspi_SpiMaster_Output SlsoPin;
-    volatile Ifx_QSPI *moudle;
+    volatile Ifx_QSPI* moudle;
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);
 
@@ -184,11 +186,11 @@ uint8 get_spi_cs_pin(spi_cs_pin_enum cs_pin)
 //-------------------------------------------------------------------------------------------------------------------
 //  @brief      16位SPI发送接收函数(用户自定义的,用于AS5047读取)
 //-------------------------------------------------------------------------------------------------------------------
-void spi_16_mosi(spi_index_enum spi_n, spi_cs_pin_enum cs_pin, uint16 *modata, uint16 *midata, uint8 continuous)
+void spi_16_mosi(spi_index_enum spi_n, spi_cs_pin_enum cs_pin, uint16* modata, uint16* midata, uint8 continuous)
 {
     uint32 i;
     Ifx_QSPI_BACON bacon;
-    volatile Ifx_QSPI *moudle;
+    volatile Ifx_QSPI* moudle;
 
     moudle = IfxQspi_getAddress((IfxQspi_Index)spi_n);
 
@@ -217,7 +219,7 @@ void spi_16_mosi(spi_index_enum spi_n, spi_cs_pin_enum cs_pin, uint16 *modata, u
         i = moudle->STATUS.B.RXFIFOLEVEL;
         while (i--)
         {
-            (uint16) IfxQspi_readReceiveFifo(moudle);
+            (uint16)IfxQspi_readReceiveFifo(moudle);
         }
     }
 
@@ -281,7 +283,7 @@ void AS5047_W_Reg(uint16 cmd, uint16 val)
 //  @return     void
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
-void AS5047_R_Reg(uint16 cmd, uint16 *val)
+void AS5047_R_Reg(uint16 cmd, uint16* val)
 {
     if (parity(cmd | AS5047P_SPI_R) == 1)
         cmd |= 0x8000; // 设置偶校验位
@@ -295,12 +297,12 @@ void AS5047_R_Reg(uint16 cmd, uint16 *val)
 //  @return     转子角度（弧度）
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
-#define REVAL_DIFF 0.92
+double zero_val = -5.88;
+extern float data_send[16];
 
-uint16 get_val()
+uint16 get_magnet_val()
 {
     uint16 val;
-    double reval;
     AS5047_R_Reg(AS5047P_ANGLECOM, &val);
     val &= 0x3FFF;
 
@@ -310,10 +312,9 @@ uint16 get_val()
 double get_global_angle(uint16 val)
 {
     double reval;
-    // theta = val*360/16384;
     val = val % 16384;
     reval = (double)val / 16384 * pi_2;
-    reval -= REVAL_DIFF;
+    // reval += zero_val;
     if (reval < 0)
     {
         reval += pi_2;
@@ -324,10 +325,9 @@ double get_global_angle(uint16 val)
 double get_rotor_angle(uint16 val)
 {
     double reval;
-    // theta = val*360/16384;
-    val = val % 2340;
-    reval = (double)val / 2340 * pi_2;
-    reval -= REVAL_DIFF;
+    val = val % 2341;
+    reval = (double)val / 2341 * pi_2;
+    reval += zero_val;
     if (reval < 0)
     {
         reval += pi_2;
