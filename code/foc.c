@@ -351,7 +351,8 @@ void mos_close()
     IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);
 }
 
-#define TESTMODE
+// #define CURRENTLOOP
+// #define TESTMODE
 
 float ang = 0;
 clark_variable adcd_struct;
@@ -434,11 +435,11 @@ void foc_commutation()
         data_send[9] = (float)(calc_elec_angle_by_magnet(theta_magnet));
         data_send[10] = (float)_normalizeAngle(ANGLE_TO_RAD(0) - theta_magnet);
         data_send[11] = (float)Park_in.u_q;
-        data_send[12] = (float) ANGLE_TO_RAD(0) - theta_elec;
-        data_send[13] = (float) calc_elec_angle_by_magnet(ANGLE_TO_RAD(0) - theta_magnet);
+        data_send[12] = (float)ANGLE_TO_RAD(0) - theta_elec;
+        data_send[13] = (float)calc_elec_angle_by_magnet(ANGLE_TO_RAD(0) - theta_magnet);
 
 
-        FOC_S.V_Clark = iPark_Calc(Park_in, calc_elec_angle_by_magnet(ANGLE_TO_RAD(0) - theta_magnet));
+        FOC_S.V_Clark = iPark_Calc(Park_in, calc_elec_angle_by_magnet(-theta_magnet));
 
 #endif
         // theta = pid_solve(&servo_pid, theta_elec); // 6

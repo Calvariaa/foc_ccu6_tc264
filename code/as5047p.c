@@ -337,20 +337,14 @@ double get_elec_angle(uint16 val)
 
 double calc_elec_angle_by_magnet(double reval)
 {
-    reval = fmod(reval * 7, pi_2);
-    reval += zero_val;
-    if (reval < 0)
-    {
-        reval += pi_2;
-    }
-    return reval;
+    return reval * 7;
 }
 
 // ¹éÒ»»¯½Ç¶È
 float _normalizeAngle(float angle)
 {
 	float a = fmod(angle, pi_2);
-	return a >= -pi ? a : (a + pi_2);
+	return a >= 0 ? a : (a + pi_2);
 }
 
 ////-------------------------------------------------------------------------------------------------------------------
