@@ -3,11 +3,15 @@
 #include "IfxQspi_SpiMaster.h"
 #include "IfxQspi.h"
 
-uint16 view;
-double theta;
+uint16 theta_val;
+
 double theta_elec;
+
 double theta_magnet;
-uint16 theta_val;  // 磁编的原始输出
+int32 full_rotations;
+
+double theta_magnet_last = 0;
+int32 full_rotations_last = 0;
 
 //-------------------------------------------------------------------------------------------------------------------
 //  函数简介      spi_init_16初始化
@@ -291,61 +295,6 @@ void AS5047_R_Reg(uint16 cmd, uint16* val)
     spi_16_mosi(AS5047P_SPI, AS5047P_CS_PIN, &cmd, val, 0);
     *val &= 0x3FFF;
 }
-////-------------------------------------------------------------------------------------------------------------------
-//  @brief      得到转子角度
-//  @param      none
-//  @return     转子角度（弧度）
-//  @since      none
-////-------------------------------------------------------------------------------------------------------------------
-double zero_val = -5.88;
-extern float data_send[32];
-
-uint16 get_magnet_val()
-{
-    uint16 val;
-    AS5047_R_Reg(AS5047P_ANGLECOM, &val);
-    val &= 0x3FFF;
-
-    return val;
-}
-
-double get_magnet_angle(uint16 val)
-{
-    double reval;
-    val = val % 16384;
-    reval = (double)val / 16384 * pi_2;
-    // reval += zero_val;
-    if (reval < 0)
-    {
-        reval += pi_2;
-    }
-    return reval;
-}
-
-double get_elec_angle(uint16 val)
-{
-    double reval;
-    val = val % 2341;
-    reval = (double)val / 2341 * pi_2;
-    reval += zero_val;
-    if (reval < 0)
-    {
-        reval += pi_2;
-    }
-    return reval;
-}
-
-double calc_elec_angle_by_magnet(double reval)
-{
-    return reval * 7;
-}
-
-// 归一化角度
-float _normalizeAngle(float angle)
-{
-	float a = fmod(angle, pi_2);
-	return a >= 0 ? a : (a + pi_2);
-}
 
 ////-------------------------------------------------------------------------------------------------------------------
 //  @brief      设置零位角度
@@ -405,4 +354,72 @@ void as5047p_init(void)
 #if AS5047P_ABI_Part_EN
     AS5047P_ABI_MODE_Init();
 #endif
+}
+
+
+////-------------------------------------------------------------------------------------------------------------------
+//  @brief      得到转子角度
+//  @param      none
+//  @return     转子角度（弧度）
+//  @since      none
+////-------------------------------------------------------------------------------------------------------------------
+double zero_reval = 4.41;
+extern float data_send[32];
+
+uint16 get_magnet_val()
+{
+    uint16 val;
+    AS5047_R_Reg(AS5047P_ANGLECOM, &val);
+    val &= 0x3FFF;
+
+    return val;
+}
+
+double get_magnet_angle(uint16 val)
+{
+    double reval;
+    val = val % 16384;
+    reval = (double)val / 16384 * pi_2;
+    // reval -= zero_reval;
+    if (reval < 0)
+    {
+        reval += pi_2;
+    }
+    return reval;
+}
+
+double angle_prev = 0.0;
+int32 angle_rot_dat = 0;
+int32 get_magnet_angle_rot(double reval)
+{
+    double d_angle = reval - angle_prev;
+    if (fabs(d_angle) > (0.8f * pi_2)) angle_rot_dat += (d_angle > 0.f) ? -1 : 1;
+
+    angle_prev = reval;
+    return angle_rot_dat;
+}
+
+double get_elec_angle(uint16 val)
+{
+    double reval;
+    val = val % 2340;
+    reval = (double)val / 2340 * pi_2;
+    reval -= zero_reval;
+    if (reval < 0)
+    {
+        reval += pi_2;
+    }
+    return reval;
+}
+
+// 归一化角度
+float _normalizeAngle(float angle)
+{
+    float a = fmod(angle, pi_2);
+    return a >= 0 ? a : (a + pi_2);
+}
+
+double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint16 T)
+{
+    return (double)(((reval_rot - reval_rot_last) * pi_2) + (reval - reval_last)) * T;
 }

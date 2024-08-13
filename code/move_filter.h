@@ -14,7 +14,6 @@ typedef struct
     int32 data_average;                   // 数据平均值
 } move_filter_struct;
 
-extern move_filter_struct speed_filter;
 
 void move_filter_init(move_filter_struct *move_average);
 void move_filter_calc(move_filter_struct *move_average, int32 new_data);
@@ -33,6 +32,8 @@ extern move_filter_double_struct current_b_filter;
 extern move_filter_double_struct current_c_filter;
 extern move_filter_double_struct iq_ref_filter;
 extern move_filter_double_struct id_ref_filter;
+extern move_filter_double_struct speed_filter;
+
 void move_filter_double_init(move_filter_double_struct *move_average);
 void move_filter_double_calc(move_filter_double_struct *move_average, double new_data);
 

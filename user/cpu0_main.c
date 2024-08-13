@@ -55,6 +55,7 @@ int core0_main(void)
 
     move_filter_double_init(&id_ref_filter); // 滑动滤波初始化
     move_filter_double_init(&iq_ref_filter); // 滑动滤波初始化
+    move_filter_double_init(&speed_filter); // 滑动滤波初始化
 
     // 初始化输出速度与方向信息的引脚
     motor_information_out_init();
@@ -80,7 +81,7 @@ int core0_main(void)
     {
         led_output(); // 根据当前状态点亮或者熄灭LED灯
 
-        data_send[0] = (float)theta;
+        // data_send[0] = (float)theta;
         data_send[4] = (float)pwm_in_duty;
         data_send[5] = (float)motor_control.current_speed;
 

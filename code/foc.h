@@ -129,4 +129,5 @@ Instrument_Typedef Tool_Calc(out_variable clark2);
 
 extern int slow_startup_count;
 
+extern double zero_reval;
 #endif /* CODE_FOC_H_ */

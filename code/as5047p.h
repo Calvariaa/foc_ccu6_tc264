@@ -75,16 +75,23 @@
 #define AS5047P_A (TIM4_ENCODER_CH2_P00_9) // ½ÓÄ£¿éA
 #endif
 
-uint16 get_magnet_val();
-double get_magnet_angle(uint16 val);
-double get_elec_angle(uint16 val);
-double calc_elec_angle_by_magnet(double reval);
-float _normalizeAngle(float angle);
 void as5047p_printf_test(void);
 void as5047p_init(void);
-extern double theta;
-extern uint16 theta_val;
+
+uint16 get_magnet_val();
+double get_magnet_angle(uint16 val);
+int32 get_magnet_angle_rot(double reval);
+double get_elec_angle(uint16 val);
+float _normalizeAngle(float angle);
+double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint16 T);
+
 extern double theta_elec;
+extern uint16 theta_val;
+
 extern double theta_magnet;
-extern double zero_val;
+extern int32 full_rotations;
+
+extern double theta_magnet_last;
+extern int32 full_rotations_last;
+
 #endif /*_AS5047P_H*/
