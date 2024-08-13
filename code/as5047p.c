@@ -363,7 +363,8 @@ void as5047p_init(void)
 //  @return     转子角度（弧度）
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
-double zero_reval = 4.41;
+// double zero_reval = 4.41;  // old
+double zero_reval = 3.41;  // new
 extern float data_send[32];
 
 uint16 get_magnet_val()

@@ -378,7 +378,7 @@ void foc_commutation()
     data_send[7] = Park_in.u_d * 1000;
 #elif defined TESTMODE
     // test
-    ang += 0.2;
+    ang += 0.02;
     if (ang >= 360) {
         expect_rotations++;
         ang -= 360;
@@ -389,7 +389,7 @@ void foc_commutation()
     }
 
     Park_in.u_d = 0;
-    Park_in.u_q = 1;
+    Park_in.u_q = 2;
 
     data_send[13] = theta_elec - ANGLE_TO_RAD(ang);
     data_send[14] = Park_in.u_q;
