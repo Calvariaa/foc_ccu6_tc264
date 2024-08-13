@@ -15,15 +15,13 @@
  // double theta2;
 
 
-int slow_startup_count = 0;
+// int slow_startup_count = 0;
 int dianliu = 0;
 
 float error_sum_d = 0;
 float error_sum_q = 0;
 
 int32 expect_rotations = 0;
-
-bool protect_flag = false;
 
 extern float data_send[32];
 //-------------------------------------------------------------------------------------------------------------------
@@ -328,33 +326,6 @@ ipark_variable Current_Close_Loop(ipark_variable ref_park, park_variable I_park)
     return Park_in;
 }
 
-//-------------------------------------------------------------------------------------------------------------------
-//  @brief      开启所有上桥     关闭所有下桥
-//  @param      periodAH:       A上桥PWM占空比
-//  @param      periodBH:       B上桥PWM占空比
-//  @param      periodCH:       C上桥PWM占空比
-//  @return     void
-//  @since      采用中心对齐模式，装载值越大，高电平时间越短
-//-------------------------------------------------------------------------------------------------------------------
-void Mos_All_High_Open(uint16 periodAH, uint16 periodBH, uint16 periodCH)
-{
-    ccu6SFR->MODCTR.B.T12MODEN = 0x3F; // 0011 1111                   //用户手册27.8章节自己看
-
-    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_0, periodAH); // 设置比较值
-    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_1, periodBH); // 设置比较值
-    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_2, periodCH); // 设置比较值
-    IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);                  // 使能
-}
-void mos_close()
-{
-    ccu6SFR->MODCTR.B.T12MODEN = 0x2A;
-
-    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_0, 0);
-    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_1, 0);
-    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_2, 0);
-    IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);
-}
-
 // #define CURRENTLOOP
 // #define TESTMODE
 
@@ -362,134 +333,129 @@ float ang = 0;
 clark_variable adcd_struct;
 park_variable I_out;
 ipark_variable Park_in;
+
 void foc_commutation()
 {
-    if (slow_startup_count <= 200000)
-    {
-        slow_startup_count++;
-    }
-    if (slow_startup_count >= 100000)
-    {
-        theta_val = get_magnet_val();
-        theta_magnet = get_magnet_angle(theta_val);
-        theta_elec = get_elec_angle(theta_val);
-        full_rotations = get_magnet_angle_rot(theta_magnet);
+    theta_val = get_magnet_val();
+    theta_magnet = get_magnet_angle(theta_val);
+    theta_elec = get_elec_angle(theta_val);
+    full_rotations = get_magnet_angle_rot(theta_magnet);
 
-        data_send[6] = (float)theta_elec;
-        data_send[7] = (float)full_rotations;
-        data_send[8] = (float)RAD_TO_ANGLE(theta_magnet);
-        data_send[9] = (float)RAD_TO_ANGLE(theta_magnet + full_rotations * pi_2);
+    data_send[6] = (float)theta_elec;
+    data_send[7] = (float)full_rotations;
+    data_send[8] = (float)RAD_TO_ANGLE(theta_magnet);
+    data_send[9] = (float)RAD_TO_ANGLE(theta_magnet + full_rotations * pi_2);
 
 #ifdef CURRENTLOOP
 
-        adc_read();
-        data_send[1] = (float)adc_information.current_a;
-        data_send[2] = (float)adc_information.current_b;
-        data_send[3] = (float)adc_information.current_c;
+    adc_read();
+    data_send[1] = (float)adc_information.current_a;
+    data_send[2] = (float)adc_information.current_b;
+    data_send[3] = (float)adc_information.current_c;
 
-        /*----------*/
-        adcd_struct = clark_cacl(adc_information);
-        /*----------*/
-        I_out = park_cacl(adcd_struct, theta);
+    /*----------*/
+    adcd_struct = clark_cacl(adc_information);
+    /*----------*/
+    I_out = park_cacl(adcd_struct, theta);
 
-        data_send[4] = (float)I_out.id_ref * 10000;
-        data_send[5] = (float)I_out.iq_ref * 10000;
+    data_send[4] = (float)I_out.id_ref * 10000;
+    data_send[5] = (float)I_out.iq_ref * 10000;
 
-        // look5 =  adc_information.current_a *1000;
-        //  look6 =  adc_information.current_b *1000;
-        // data_send[3]=(int16) I_out.id_ref*1000;
-        // data_send[4]=(int16)  I_out.iq_ref*1000;
-        FOC_S.Ref_Park.u_d = 0;
-        FOC_S.Ref_Park.u_q = 0.3; // 期望值
-        if (slow_startup_count >= 200000)
-        {
-            FOC_S.Ref_Park.u_q = 0.2; // 期望值//0.01
-        }
+    // look5 =  adc_information.current_a *1000;
+    //  look6 =  adc_information.current_b *1000;
+    // data_send[3]=(int16) I_out.id_ref*1000;
+    // data_send[4]=(int16)  I_out.iq_ref*1000;
+    FOC_S.Ref_Park.u_d = 0;
+    FOC_S.Ref_Park.u_q = 0.3; // 期望值
+    if (timer_1ms >= 100)
+    {
+        FOC_S.Ref_Park.u_q = 0.2; // 期望值//0.01
+    }
 
-        Current_Close_Loop(FOC_S.Ref_Park, I_out);
+    Current_Close_Loop(FOC_S.Ref_Park, I_out);
 
-        data_send[6] = Park_in.u_q * 1000;
-        data_send[7] = Park_in.u_d * 1000;
+    data_send[6] = Park_in.u_q * 1000;
+    data_send[7] = Park_in.u_d * 1000;
 #elif defined TESTMODE
-        // test
-        ang += 0.2;
-        if (ang >= 360) {
-            expect_rotations++;
-            ang -= 360;
-        }
-        if (ang < -360) {
-            expect_rotations--;
-            ang += 360;
-        }
+    // test
+    ang += 0.2;
+    if (ang >= 360) {
+        expect_rotations++;
+        ang -= 360;
+    }
+    if (ang < -360) {
+        expect_rotations--;
+        ang += 360;
+    }
 
-        Park_in.u_d = 0;
-        Park_in.u_q = 1;
+    Park_in.u_d = 0;
+    Park_in.u_q = 1;
 
-        data_send[13] = theta_elec - ANGLE_TO_RAD(ang);
-        data_send[14] = Park_in.u_q;
+    data_send[13] = theta_elec - ANGLE_TO_RAD(ang);
+    data_send[14] = Park_in.u_q;
 
-        FOC_S.V_Clark = iPark_Calc(Park_in, -ANGLE_TO_RAD(ang));
+    FOC_S.V_Clark = iPark_Calc(Park_in, -ANGLE_TO_RAD(ang));
 #else
 
-        Park_in.u_d = 0;
+    Park_in.u_d = 0;
 
-        // test
-        // ang += 0.01;
-        // if (ang >= 360) {
-        //     expect_rotations++;
-        //     ang -= 360;
-        // }
-        // if (ang < -360) {
-        //     expect_rotations--;
-        //     ang += 360;
-        // }
-
-
-        move_filter_double_calc(&speed_filter, get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD));
+    // test
+    ang += 0.05;
+    if (ang >= 360) {
+        expect_rotations++;
+        ang -= 360;
+    }
+    if (ang < -360) {
+        expect_rotations--;
+        ang += 360;
+    }
 
 
-        // Park_in.u_q = 2;
-        Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(ang) + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
-        // Park_in.u_q = -pid_solve(&speed_pid, -1.0 - (speed_filter.data_average)) / 1000.f;
-        // Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(0)) - (theta_magnet + full_rotations * pi_2)) / 1000.f;
+    move_filter_double_calc(&speed_filter, get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD));
 
-        FOC_S.V_Clark = iPark_Calc(Park_in, -theta_elec);
 
-        data_send[10] = (float)(ANGLE_TO_RAD(ang) + expect_rotations * pi_2);
-        data_send[11] = (float)Park_in.u_q;
-        data_send[12] = (float)speed_filter.data_average;
+    // Park_in.u_q = 2;
+    Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(ang) + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
+    // Park_in.u_q = -pid_solve(&speed_pid, -1.0 - (speed_filter.data_average)) / 1000.f;
+    // Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(0)) - (theta_magnet + full_rotations * pi_2)) / 1000.f;
+
+    FOC_S.V_Clark = iPark_Calc(Park_in, -theta_elec);
+
+    data_send[10] = (float)(ANGLE_TO_RAD(ang) + expect_rotations * pi_2);
+    data_send[11] = (float)Park_in.u_q;
+    data_send[12] = (float)speed_filter.data_average;
 
 #endif
-        // theta = pid_solve(&servo_pid, theta_elec); // 6
-        // test
+    // theta = pid_solve(&servo_pid, theta_elec); // 6
+    // test
 
-        // ang += pid_solve(&servo_pid, 0 - theta_elec);
-        // if (ang >= 360) ang -= 360;
-        // if (ang < -360)ang += 360;
+    // ang += pid_solve(&servo_pid, 0 - theta_elec);
+    // if (ang >= 360) ang -= 360;
+    // if (ang < -360)ang += 360;
 
-        // data_send[9] = (float)ang;
+    // data_send[9] = (float)ang;
 
-        // theta = ANGLE_TO_RAD((int16)ang);
+    // theta = ANGLE_TO_RAD((int16)ang);
 
-        // FOC_S.V_Clark = iPark_Calc(Park_in, 0 - theta);
+    // FOC_S.V_Clark = iPark_Calc(Park_in, 0 - theta);
 
-        FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
-        FOC_S.N = Electrical_Sector_Judge(FOC_S.tool);                                // 电角度扇区判断
+    FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
+    FOC_S.N = Electrical_Sector_Judge(FOC_S.tool);                                // 电角度扇区判断
 
-        data_send[15] = FOC_S.N;
+    data_send[15] = FOC_S.N;
 
-        FOC_S.Vector = Vector_Calc(FOC_S.tool, FOC_S.N, BUS_VOLTAGE, PWM_PRIOD_LOAD); // 矢量作用时间计算
-        FOC_S.Period = PeriodCal(FOC_S.Vector, FOC_S.N, PWM_PRIOD_LOAD);              // 各桥PWM占空比计算
+    FOC_S.Vector = Vector_Calc(FOC_S.tool, FOC_S.N, BUS_VOLTAGE, PWM_PRIOD_LOAD); // 矢量作用时间计算
+    FOC_S.Period = PeriodCal(FOC_S.Vector, FOC_S.N, PWM_PRIOD_LOAD);              // 各桥PWM占空比计算
 
-        Mos_All_High_Open(FOC_S.Period.AH, FOC_S.Period.BH, FOC_S.Period.CH);
+    mos_all_phrase_open(FOC_S.Period.AH, FOC_S.Period.BH, FOC_S.Period.CH);
 
-        data_send[1] = (float)FOC_S.Period.AH;
-        data_send[2] = (float)FOC_S.Period.BH;
-        data_send[3] = (float)FOC_S.Period.CH;
+    data_send[1] = (float)FOC_S.Period.AH;
+    data_send[2] = (float)FOC_S.Period.BH;
+    data_send[3] = (float)FOC_S.Period.CH;
 
-        theta_magnet_last = theta_magnet;
-        full_rotations_last = full_rotations;
-    }
+    theta_magnet_last = theta_magnet;
+    full_rotations_last = full_rotations;
+
 }
 
 #pragma section all restore

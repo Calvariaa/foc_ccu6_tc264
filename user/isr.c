@@ -42,16 +42,20 @@ IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
     IfxCpu_enableInterrupts();
     IfxCcu6_clearInterruptStatusFlag(&MODULE_CCU61, IfxCcu6_InterruptSource_t12PeriodMatch);
 
-    foc_commutation();
+    if (!protect_flag && timer_1ms > 50)  // 50ms
+        foc_commutation();
 }
 
+uint64 timer_1ms = 0u;
 // **************************** PIT中断函数 ****************************
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU60_CH0);
 
-    if (slow_startup_count >= 120000)
+    timer_1ms++;
+
+    if (timer_1ms >= 50)
         motor_speed_out();
 
     // if (abs(_read_dangle()) < I_Error_Speed)

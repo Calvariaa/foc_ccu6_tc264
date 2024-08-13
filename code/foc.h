@@ -127,7 +127,7 @@ VectorTime_Typedef Vector_Calc(Instrument_Typedef tool, uint8 N, uint8 Udc, uint
 uint8 Electrical_Sector_Judge(Instrument_Typedef tool);
 Instrument_Typedef Tool_Calc(out_variable clark2);
 
-extern int slow_startup_count;
+// extern int slow_startup_count;
 
 extern double zero_reval;
 #endif /* CODE_FOC_H_ */

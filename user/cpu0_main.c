@@ -37,6 +37,8 @@
  // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
 float data_send[32];
+
+bool protect_flag = true;
 // **************************** 代码区域 ****************************
 int core0_main(void)
 {
@@ -72,11 +74,14 @@ int core0_main(void)
     ccu6_pwm_init();
 
     // 初始化定时器,用于计算占空比
-    pit_ms_init(CCU60_CH0, 5);
+    pit_ms_init(CCU60_CH0, 1);
+
+    ccu6_pwm_buzzer();
 
     // 此处编写用户代码 例如外设初始化代码等
     cpu_wait_event_ready(); // 等待所有核心初始化完毕
 
+    protect_flag = false;
     while (TRUE)
     {
         led_output(); // 根据当前状态点亮或者熄灭LED灯
@@ -86,7 +91,7 @@ int core0_main(void)
         data_send[5] = (float)motor_control.current_speed;
 
         // pwm_set_freq(MOTOR_SPEED_OUT_PIN, 50, 5000);
-        if (slow_startup_count >= 120000)
+        if (timer_1ms >= 50)
         {
             for (int8 i = 0; i <= 16; i++)
                 printf("%f,", data_send[i]);

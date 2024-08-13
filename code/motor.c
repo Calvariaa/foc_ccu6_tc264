@@ -94,3 +94,30 @@ void motor_set_dir(void)
         motor_control.dir = REVERSE;
     }
 }
+
+//-------------------------------------------------------------------------------------------------------------------
+//  @brief      开启所有上桥     关闭所有下桥
+//  @param      periodAH:       A上桥PWM占空比
+//  @param      periodBH:       B上桥PWM占空比
+//  @param      periodCH:       C上桥PWM占空比
+//  @return     void
+//  @since      采用中心对齐模式，装载值越大，高电平时间越短
+//-------------------------------------------------------------------------------------------------------------------
+void mos_all_phrase_open(uint16 periodAH, uint16 periodBH, uint16 periodCH)
+{
+    ccu6SFR->MODCTR.B.T12MODEN = 0x3F; // 0011 1111                   //用户手册27.8章节自己看
+
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_0, periodAH); // 设置比较值
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_1, periodBH); // 设置比较值
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_2, periodCH); // 设置比较值
+    IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);                  // 使能
+}
+void mos_close()
+{
+    ccu6SFR->MODCTR.B.T12MODEN = 0x2A;
+
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_0, 0);
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_1, 0);
+    IfxCcu6_setT12CompareValue(ccu6SFR, IfxCcu6_T12Channel_2, 0);
+    IfxCcu6_enableShadowTransfer(ccu6SFR, TRUE, FALSE);
+}

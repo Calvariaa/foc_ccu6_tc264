@@ -73,4 +73,7 @@ void motor_information_out_init(void);
 void motor_set_dir(void);
 void motor_dir_out(void);
 void motor_speed_out(void);
+
+void mos_all_phrase_open(uint16, uint16, uint16);
+void mos_close();
 #endif /* CODE_PWM_OUTPUT_H_ */

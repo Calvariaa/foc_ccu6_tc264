@@ -21,7 +21,7 @@
 #include "isr_config.h"
 #include "ccu6_pwm.h"
 
-Ifx_CCU6 *ccu6SFR = &MODULE_CCU61;
+Ifx_CCU6* ccu6SFR = &MODULE_CCU61;
 void ccu6_pwm_init(void)
 {
 
@@ -56,12 +56,12 @@ void ccu6_pwm_init(void)
 
     ccu6SFR->CMPSTAT.U = (ccu6SFR->CMPSTAT.U & (~((uint16)0x3f << 8))) | (0x15 << 8);
 
-    const IfxCcu6_Cc60_Out *cc60Out = &IfxCcu61_CC60_P20_8_OUT;
-    const IfxCcu6_Cc61_Out *cc61Out = &IfxCcu61_CC61_P20_9_OUT;
-    const IfxCcu6_Cc62_Out *cc62Out = &IfxCcu61_CC62_P20_10_OUT;
-    IfxCcu6_Cout60_Out *cout60 = &IfxCcu61_COUT60_P33_12_OUT;
-    IfxCcu6_Cout61_Out *cout61 = &IfxCcu61_COUT61_P33_10_OUT;
-    IfxCcu6_Cout62_Out *cout62 = &IfxCcu61_COUT62_P33_8_OUT;
+    const IfxCcu6_Cc60_Out* cc60Out = &IfxCcu61_CC60_P20_8_OUT;
+    const IfxCcu6_Cc61_Out* cc61Out = &IfxCcu61_CC61_P20_9_OUT;
+    const IfxCcu6_Cc62_Out* cc62Out = &IfxCcu61_CC62_P20_10_OUT;
+    IfxCcu6_Cout60_Out* cout60 = &IfxCcu61_COUT60_P33_12_OUT;
+    IfxCcu6_Cout61_Out* cout61 = &IfxCcu61_COUT61_P33_10_OUT;
+    IfxCcu6_Cout62_Out* cout62 = &IfxCcu61_COUT62_P33_8_OUT;
     IfxCcu6_initCc60OutPin(cc60Out, IfxPort_OutputMode_pushPull, IfxPort_PadDriver_cmosAutomotiveSpeed1); // Q1
     IfxCcu6_initCc61OutPin(cc61Out, IfxPort_OutputMode_pushPull, IfxPort_PadDriver_cmosAutomotiveSpeed1); // Q3
     IfxCcu6_initCc62OutPin(cc62Out, IfxPort_OutputMode_pushPull, IfxPort_PadDriver_cmosAutomotiveSpeed1); // Q5
@@ -89,7 +89,7 @@ void ccu6_pwm_init(void)
     IfxCcu6_enableInterrupt(ccu6SFR, IfxCcu6_InterruptSource_t12PeriodMatch);
     IfxCcu6_routeInterruptNode(ccu6SFR, IfxCcu6_InterruptSource_t12PeriodMatch, IfxCcu6_ServiceRequest_2);
 
-    volatile Ifx_SRC_SRCR *src;
+    volatile Ifx_SRC_SRCR* src;
     src = IfxCcu6_getSrcAddress(ccu6SFR, IfxCcu6_ServiceRequest_2);
     IfxSrc_init(src, CCU60_T12_INT_SERVICE, CCU60_T12_ISR_PRIORITY);
     IfxSrc_enable(src);
@@ -98,4 +98,24 @@ void ccu6_pwm_init(void)
 uint8 ccu61_get_trap_flag(void)
 {
     return ccu6SFR->IS.B.TRPS;
+}
+
+const uint16 frequency_spectrum[] = { 0, 523 * 2, 587 * 2, 659 * 2, 698 * 2, 783 * 2 };
+const uint8 pwm_buzzer_duty = PWM_PRIOD_LOAD / 2;
+void ccu6_pwm_buzzer()
+{
+    IfxCcu6_setT12Frequency(ccu6SFR, (float32)FCY, FCY / frequency_spectrum[1], IfxCcu6_T12CountMode_centerAligned);
+    mos_all_phrase_open(pwm_buzzer_duty, 0, 0);
+    system_delay_ms(200);
+
+    IfxCcu6_setT12Frequency(ccu6SFR, (float32)FCY, FCY / frequency_spectrum[3], IfxCcu6_T12CountMode_centerAligned);
+    mos_all_phrase_open(0, pwm_buzzer_duty, 0);
+    system_delay_ms(200);
+
+    IfxCcu6_setT12Frequency(ccu6SFR, (float32)FCY, FCY / frequency_spectrum[5], IfxCcu6_T12CountMode_centerAligned);
+    mos_all_phrase_open(0, 0, pwm_buzzer_duty);
+    system_delay_ms(200);
+
+    IfxCcu6_setT12Frequency(ccu6SFR, (float32)FCY, FCY / FPWM, IfxCcu6_T12CountMode_centerAligned);
+    mos_close();
 }

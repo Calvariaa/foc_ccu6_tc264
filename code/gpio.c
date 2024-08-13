@@ -61,7 +61,7 @@ void led_output(void)
     else
     {
         gpio_set_level(LED_ERR_PIN, 1); // 关闭故障灯
-        if (slow_startup_count >= 100000)
+        if (timer_1ms >= 50)
             gpio_set_level(LED_RUN_PIN, 0); // 开启运行灯
         else
             gpio_set_level(LED_RUN_PIN, 1); // 关闭运行灯
