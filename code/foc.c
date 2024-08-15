@@ -329,7 +329,7 @@ ipark_variable Current_Close_Loop(ipark_variable ref_park, park_variable I_park)
 // #define CURRENTLOOP
 // #define TESTMODE
 
-float ang = 0;
+float set_angle_accel = 0;
 clark_variable adcd_struct;
 park_variable I_out;
 ipark_variable Park_in;
@@ -378,21 +378,21 @@ void foc_commutation()
     data_send[7] = Park_in.u_d * 1000;
 #elif defined TESTMODE
     // test
-    ang += ANGLE_TO_RAD(0.02);
-    if (ang >= pi_2) {
+    set_angle_accel += ANGLE_TO_RAD(0.02);
+    if (set_angle_accel >= pi_2) {
         expect_rotations++;
-        ang -= pi_2;
+        set_angle_accel -= pi_2;
     }
-    if (ang < -pi_2) {
+    if (set_angle_accel < -pi_2) {
         expect_rotations--;
-        ang += pi_2;
+        set_angle_accel += pi_2;
     }
 
     Park_in.u_d = 0;
     Park_in.u_q = 2;
 
-    data_send[13] = theta_elec - ang;
-    data_send[14] = Park_in.u_q;
+    // data_send[13] = theta_elec - ang;
+    // data_send[14] = Park_in.u_q;
 
     FOC_S.V_Clark = iPark_Calc(Park_in, -ang);
 #else
@@ -400,36 +400,40 @@ void foc_commutation()
     Park_in.u_d = 0;
 
     // test
-    // ang += ANGLE_TO_RAD(0.2);
-    if (ang >= pi_2) {
+    // set_angle_accel += ANGLE_TO_RAD(0.2);
+    set_angle_accel += motor_control.set_speed;
+    if (set_angle_accel >= pi_2) {
         expect_rotations++;
-        ang -= pi_2;
+        set_angle_accel -= pi_2;
     }
-    if (ang < -pi_2) {
+    if (set_angle_accel < -pi_2) {
         expect_rotations--;
-        ang += pi_2;
+        set_angle_accel += pi_2;
     }
 
 
-    move_filter_double_calc(&speed_filter, get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD) * 10);
+    // move_filter_calc(&speed_filter, (int32)get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD) * 10);
 
+//    (int32)get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD);
 
     // Park_in.u_q = 2;
-    Park_in.u_q = pid_solve(&servo_pid, (ang + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
+    if (!protect_flag)
+        Park_in.u_q = pid_solve(&servo_pid, (set_angle_accel + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
+    else
+        Park_in.u_q = 0;
     // Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(0)) - (theta_magnet + full_rotations * pi_2)) / 1000.f;
 
     FOC_S.V_Clark = iPark_Calc(Park_in, -theta_elec);
 
-    data_send[10] = (float)(ang + expect_rotations * pi_2);
+    data_send[10] = (float)(set_angle_accel + expect_rotations * pi_2);
     data_send[11] = (float)Park_in.u_q;
-    data_send[12] = (float)speed_filter.data_average;
+    // data_send[12] = (float)speed_filter.data_average;
 
 #endif
 
     FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
     FOC_S.N = Electrical_Sector_Judge(FOC_S.tool);                                // 电角度扇区判断
 
-    data_send[15] = FOC_S.N;
 
     FOC_S.Vector = Vector_Calc(FOC_S.tool, FOC_S.N, BUS_VOLTAGE, PWM_PRIOD_LOAD); // 矢量作用时间计算
     FOC_S.Period = PeriodCal(FOC_S.Vector, FOC_S.N, PWM_PRIOD_LOAD);              // 各桥PWM占空比计算

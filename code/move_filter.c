@@ -19,7 +19,7 @@
 
 #include "move_filter.h"
 
-move_filter_double_struct speed_filter;
+move_filter_struct speed_filter;
 move_filter_double_struct current_a_filter;
 move_filter_double_struct current_b_filter;
 move_filter_double_struct current_c_filter;

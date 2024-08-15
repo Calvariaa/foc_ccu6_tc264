@@ -59,7 +59,7 @@ typedef struct
     MOTOR_EN_STATUS_enum en_status; // 指示电机使能状态
     uint8 brake_flag;               // 指示当前刹车是否有效    1：正在刹车  0：正常运行
     MOTOR_DIR_enum dir;             // 电机旋转方向 FORWARD：正转  REVERSE：反转     BRAKE：刹车
-    int32 set_speed;                // 设置的速度
+    float set_speed;                // 设置的速度
     int32 current_speed;                // 设置的速度
     int32 max_speed;                // 速度最大值
     int32 min_speed;                // 速度最小值
@@ -70,8 +70,9 @@ extern int16 duty; // PWM占空比初值
 
 // void motor_init(void);
 void motor_information_out_init(void);
-void motor_set_dir(void);
 void motor_dir_out(void);
+void motor_set_dir();
+void motor_set_speed();
 void motor_speed_out(void);
 
 void mos_all_phrase_open(uint16, uint16, uint16);

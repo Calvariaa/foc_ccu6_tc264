@@ -45,7 +45,7 @@
 
 // extern uint16 i;
 extern uint16 pwm_in_duty;
-extern uint16 pwm_in_speed;
+extern int16 pwm_in_speed;
 extern IfxGtm_Tim_In driver;
 extern IfxGtm_Tim_In_Config config;
 

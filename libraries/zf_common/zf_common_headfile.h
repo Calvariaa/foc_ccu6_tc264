@@ -147,5 +147,6 @@
 
 extern uint64 timer_1ms;
 extern bool protect_flag;
+extern bool init_finish_flag;
 #endif
 

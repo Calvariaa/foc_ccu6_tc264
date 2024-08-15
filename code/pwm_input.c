@@ -38,7 +38,7 @@
 #include "pwm_input.h"
 
 uint16 pwm_in_duty;
-uint16 pwm_in_speed;
+int16 pwm_in_speed;
 IfxGtm_Tim_In driver;
 IfxGtm_Tim_In driver_back;
 IfxGtm_Tim_In_Config config;

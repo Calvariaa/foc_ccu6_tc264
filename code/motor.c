@@ -58,20 +58,22 @@ void motor_information_out_init(void)
 ////-------------------------------------------------------------------------------------------------------------------
 void motor_speed_out(void)
 {
-    // encoder = encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
-    // encoder_clear_count(AS5047P_TIM);         // 清除对应计数
-
-    // encoder = (int32)speed_filter.data_average;
-    encoder = (int32)50;
+    encoder = (int32)encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
+    encoder_clear_count(AS5047P_TIM);         // 清除对应计数
 
     motor_control.current_speed = encoder;
+
+    // encoder = (int32)(speed_filter.data_average);
+    // encoder = (int32)50;
+
+    // motor_control.current_speed = encoder;
     if (encoder)
     {
-        pwm_set_freq(MOTOR_SPEED_OUT_PIN, func_abs(encoder), 5000);
+        pwm_set_freq(MOTOR_SPEED_OUT_PIN, func_abs(encoder) * 1024, 5000);
         if (encoder < 0)
-            gpio_set_level(MOTOR_DIR_OUT_PIN, 0);
-        if (encoder > 0)
             gpio_set_level(MOTOR_DIR_OUT_PIN, 1);
+        if (encoder > 0)
+            gpio_set_level(MOTOR_DIR_OUT_PIN, 0);
     }
     else
     {
@@ -86,7 +88,7 @@ void motor_speed_out(void)
 // 使用示例     motor_set_dir();
 // 备注信息
 //-------------------------------------------------------------------------------------------------------------------
-void motor_set_dir(void)
+void motor_set_dir()
 {
     if (gpio_get_level(MOTOR_DIR_IN_PIN) == 1)
     {
@@ -96,6 +98,18 @@ void motor_set_dir(void)
     {
         motor_control.dir = REVERSE;
     }
+}
+
+void motor_set_speed()
+{
+    // if (gpio_get_level(MOTOR_DIR_IN_PIN) == 1)
+    // {
+    //     motor_control.dir = FORWARD;
+    // }
+    // else
+    // {
+    //     motor_control.dir = REVERSE;
+    // }
 }
 
 //-------------------------------------------------------------------------------------------------------------------

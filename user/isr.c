@@ -42,7 +42,7 @@ IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
     IfxCpu_enableInterrupts();
     IfxCcu6_clearInterruptStatusFlag(&MODULE_CCU61, IfxCcu6_InterruptSource_t12PeriodMatch);
 
-    if (!protect_flag && timer_1ms > 50)  // 50ms
+    if (timer_1ms > 50)  // 50ms
         foc_commutation();
 }
 
@@ -53,16 +53,54 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     interrupt_global_enable(0); // 开启中断嵌套
     pit_clear_flag(CCU60_CH0);
 
-    timer_1ms++;
+    if (init_finish_flag)
+        timer_1ms++;
 
-    if (!protect_flag && timer_1ms >= 50)
-        motor_speed_out();
+    if (timer_1ms < 50)
+        return;
+
+    motor_speed_out();
 
     // if (abs(_read_dangle()) < I_Error_Speed)
     // {
     //     if (I_Error_Cnt <= I_Error_Dat)
     //         I_Error_Cnt++;
     // }
+
+    if (pwm_in_duty < 324)
+    {
+        if (protect_flag == 0)
+            set_zero_angle(get_magnet_angle(get_magnet_val()));
+
+        full_rotations = 0;
+        full_rotations_last = 0;
+
+        protect_flag = 1;
+        pwm_in_speed = 0;
+
+        motor_control.set_speed = 0;
+    }
+    else if (pwm_in_duty < 1325)
+    {
+        protect_flag = 0;
+        motor_set_dir();
+        pwm_in_speed = (pwm_in_duty - 324) / 2;
+
+        motor_control.set_speed = (float)(MINMAX((pwm_in_speed / 10000.f), -0.2f, 0.2f)) * (motor_control.dir ? 1 : -1);
+    }
+    else
+    {
+        if (protect_flag == 0)
+            set_zero_angle(get_magnet_angle(get_magnet_val()));
+
+        full_rotations = 0;
+        full_rotations_last = 0;
+
+        protect_flag = 1;
+        pwm_in_speed = 0;
+
+        motor_control.set_speed = 0;
+    }
 }
 
 // 输入捕获
@@ -97,6 +135,9 @@ IFX_INTERRUPT(gtm_pwm_in, 0, GTM_PWM_IN_PRIORITY)
         new_data_filter = 0;
     }
     pwm_in_duty = (uint16)func_limit_ab((driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick), 0, PWM_PRIOD_LOAD);
+    // 5000 -> 1325
+    // 1000 -> 325
+
 }
 
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
