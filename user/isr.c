@@ -70,33 +70,20 @@ int8 new_data_filter = 0;
 IFX_INTERRUPT(gtm_pwm_in, 0, GTM_PWM_IN_PRIORITY)
 {
     IfxGtm_Tim_In_update(&driver);
-
-    if (FALSE == driver.newData)
+    if(FALSE == driver.newData)
     {
-        if (gpio_get_level(MOTOR_PWM_IN_PIN))
+        if(gpio_get(MOTOR_PWM_IN_PIN))
         {
-            if (new_data_filter > 0)
-            {
-                new_data_filter--;
-            }
-            else
-            {
-                driver.periodTick = 20000;
-                driver.pulseLengthTick = driver.periodTick;
-            }
+            driver.periodTick = FPWM;                          //周期 driver.periodTick;
+            driver.pulseLengthTick = driver.periodTick;         //高电平时间 driver.pulseLengthTick;
         }
         else
         {
-            new_data_filter = 3;
-            driver.periodTick = 20000;
+            driver.periodTick = FPWM;
             driver.pulseLengthTick = 0;
         }
     }
-    else
-    {
-        new_data_filter = 0;
-    }
-    pwm_in_duty = (uint16)func_limit_ab((driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick), 0, PWM_PRIOD_LOAD);
+    pwm_in_duty = (int16)limit_ab((driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick), 0, PWM_PRIOD_LOAD);
 }
 
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)

@@ -13,6 +13,9 @@ int32 full_rotations;
 double theta_magnet_last = 0;
 int32 full_rotations_last = 0;
 
+double zero_reval = 0;
+double zero_angle = 0;
+
 //-------------------------------------------------------------------------------------------------------------------
 //  函数简介      spi_init_16初始化
 //  参数说明      spi_n           选择SPI模块(SPI_1-SPI_4)
@@ -363,8 +366,6 @@ void as5047p_init(void)
 //  @return     转子角度（弧度）
 //  @since      none
 ////-------------------------------------------------------------------------------------------------------------------
-// double zero_reval = 4.41;  // old
-double zero_reval = 3.41;  // new
 extern float data_send[32];
 
 uint16 get_magnet_val()
@@ -381,7 +382,7 @@ double get_magnet_angle(uint16 val)
     double reval;
     val = val % 16384;
     reval = (double)val / 16384 * pi_2;
-    // reval -= zero_reval;
+    reval -= zero_angle;
     if (reval < 0)
     {
         reval += pi_2;
@@ -423,4 +424,9 @@ float _normalizeAngle(float angle)
 double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint16 T)
 {
     return (double)(((reval_rot - reval_rot_last) * pi_2) + (reval - reval_last)) * T;
+}
+
+void set_zero_angle(float angle)
+{
+    zero_angle = angle;
 }

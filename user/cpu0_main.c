@@ -48,6 +48,7 @@ int core0_main(void)
 
     // 初始化LED引脚
     led_init();
+    board_check_init();
 
     // 初始化按键引脚
     key_init(5);
@@ -81,14 +82,17 @@ int core0_main(void)
     // 此处编写用户代码 例如外设初始化代码等
     cpu_wait_event_ready(); // 等待所有核心初始化完毕
 
+    set_zero_angle(get_magnet_angle(get_magnet_val()));
+
     protect_flag = false;
     while (TRUE)
     {
         led_output(); // 根据当前状态点亮或者熄灭LED灯
 
-        // data_send[0] = (float)theta;
+        data_send[0] = (float)zero_reval;
         data_send[4] = (float)pwm_in_duty;
         data_send[5] = (float)motor_control.current_speed;
+        data_send[16] = (float)zero_angle;
 
         // pwm_set_freq(MOTOR_SPEED_OUT_PIN, 50, 5000);
         if (timer_1ms >= 50)

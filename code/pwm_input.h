@@ -43,8 +43,9 @@
 #define MOTOR_PWM_IN_PIN P02_6
 
 
-extern uint16 i;
+// extern uint16 i;
 extern uint16 pwm_in_duty;
+extern uint16 pwm_in_speed;
 extern IfxGtm_Tim_In driver;
 extern IfxGtm_Tim_In_Config config;
 

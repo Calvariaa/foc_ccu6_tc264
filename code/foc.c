@@ -343,8 +343,8 @@ void foc_commutation()
 
     data_send[6] = (float)theta_elec;
     data_send[7] = (float)full_rotations;
-    data_send[8] = (float)RAD_TO_ANGLE(theta_magnet);
-    data_send[9] = (float)RAD_TO_ANGLE(theta_magnet + full_rotations * pi_2);
+    data_send[8] = (float)theta_magnet;
+    data_send[9] = (float)theta_magnet + full_rotations * pi_2;
 
 #ifdef CURRENTLOOP
 
@@ -378,36 +378,36 @@ void foc_commutation()
     data_send[7] = Park_in.u_d * 1000;
 #elif defined TESTMODE
     // test
-    ang += 0.02;
-    if (ang >= 360) {
+    ang += ANGLE_TO_RAD(0.02);
+    if (ang >= pi_2) {
         expect_rotations++;
-        ang -= 360;
+        ang -= pi_2;
     }
-    if (ang < -360) {
+    if (ang < -pi_2) {
         expect_rotations--;
-        ang += 360;
+        ang += pi_2;
     }
 
     Park_in.u_d = 0;
     Park_in.u_q = 2;
 
-    data_send[13] = theta_elec - ANGLE_TO_RAD(ang);
+    data_send[13] = theta_elec - ang;
     data_send[14] = Park_in.u_q;
 
-    FOC_S.V_Clark = iPark_Calc(Park_in, -ANGLE_TO_RAD(ang));
+    FOC_S.V_Clark = iPark_Calc(Park_in, -ang);
 #else
 
     Park_in.u_d = 0;
 
     // test
-    ang += 0.05;
-    if (ang >= 360) {
+    // ang += ANGLE_TO_RAD(0.2);
+    if (ang >= pi_2) {
         expect_rotations++;
-        ang -= 360;
+        ang -= pi_2;
     }
-    if (ang < -360) {
+    if (ang < -pi_2) {
         expect_rotations--;
-        ang += 360;
+        ang += pi_2;
     }
 
 
@@ -415,29 +415,16 @@ void foc_commutation()
 
 
     // Park_in.u_q = 2;
-    Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(ang) + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
-    // Park_in.u_q = -pid_solve(&speed_pid, -1.0 - (speed_filter.data_average)) / 1000.f;
+    Park_in.u_q = pid_solve(&servo_pid, (ang + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
     // Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(0)) - (theta_magnet + full_rotations * pi_2)) / 1000.f;
 
     FOC_S.V_Clark = iPark_Calc(Park_in, -theta_elec);
 
-    data_send[10] = (float)(ANGLE_TO_RAD(ang) + expect_rotations * pi_2);
+    data_send[10] = (float)(ang + expect_rotations * pi_2);
     data_send[11] = (float)Park_in.u_q;
     data_send[12] = (float)speed_filter.data_average;
 
 #endif
-    // theta = pid_solve(&servo_pid, theta_elec); // 6
-    // test
-
-    // ang += pid_solve(&servo_pid, 0 - theta_elec);
-    // if (ang >= 360) ang -= 360;
-    // if (ang < -360)ang += 360;
-
-    // data_send[9] = (float)ang;
-
-    // theta = ANGLE_TO_RAD((int16)ang);
-
-    // FOC_S.V_Clark = iPark_Calc(Park_in, 0 - theta);
 
     FOC_S.tool = Tool_Calc(FOC_S.V_Clark);                                        // 中间变量计算
     FOC_S.N = Electrical_Sector_Judge(FOC_S.tool);                                // 电角度扇区判断

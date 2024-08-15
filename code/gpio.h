@@ -47,7 +47,10 @@
 
 #define KEY (P00_12) // Çý¶¯°å°´¼ü
 
-void led_init(void);
-void led_output(void);
+void board_check_init();
+void led_init();
+void led_output();
+
+extern uint8 board_check_id;
 
 #endif

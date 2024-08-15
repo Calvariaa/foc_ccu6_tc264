@@ -118,4 +118,7 @@ void ccu6_pwm_buzzer()
 
     IfxCcu6_setT12Frequency(ccu6SFR, (float32)FCY, FCY / FPWM, IfxCcu6_T12CountMode_centerAligned);
     mos_close();
+
+    for (uint8 i = 0; i < 64; i++)
+        get_magnet_val();
 }

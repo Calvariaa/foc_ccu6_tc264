@@ -38,6 +38,7 @@
 #include "pwm_input.h"
 
 uint16 pwm_in_duty;
+uint16 pwm_in_speed;
 IfxGtm_Tim_In driver;
 IfxGtm_Tim_In driver_back;
 IfxGtm_Tim_In_Config config;
@@ -70,10 +71,8 @@ void pwm_input_init(void)
     config.timeout.clock = IfxGtm_Cmu_Clk_0;
     config.filter.inputPin = &IfxGtm_TIM1_6_TIN6_P02_6_IN;
     config.filter.inputPinMode = IfxPort_InputMode_pullDown;
-    driver.periodTick = FPWM;
     IfxGtm_Tim_In_init(&driver, &config);
+    driver.periodTick = FPWM;
 
     gpio_init(MOTOR_DIR_IN_PIN, GPI, 0, GPI_PULL_DOWN); // 初始化方向设置引脚
-
-    // TIM_InitConfig(IfxGtm_TIM1_6_TIN6_P02_6_IN);
 }

@@ -1,7 +1,7 @@
 #include "pid.h"
 
-pid_param_t servo_pid = PID_CREATE(5.0, 15, 0., 0.8, 10000, 0.5, 0, 4);
-pid_param_t speed_pid = PID_CREATE(5.0, 15, 0., 0.8, 10000, 0.5, 0, 4);
+pid_param_t servo_pid = PID_CREATE(5.0, 0.4, 0., 0.8, 10000, 0.5, 0, 6);
+// pid_param_t speed_pid = PID_CREATE(5.0, 0.4, 0., 0.8, 10000, 0.5, 0, 6);
 
 // ≥£πÊPID
 float pid_solve(pid_param_t *pid, float error)

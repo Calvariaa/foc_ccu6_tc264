@@ -41,19 +41,35 @@
 uint8 key_status = 1;  // 当前按键状态
 uint8 key_last_status; // 上一次按键状态
 uint8 key_flag;        // 按键触发标志位
+uint8 board_check_id = 0;
 
-
-void led_init(void)
+void board_check_init()
 {
-    gpio_init(LED_RUN_PIN, GPO, 1, GPO_PUSH_PULL);  
-    gpio_init(LED_ERR_PIN, GPO, 1, GPO_PUSH_PULL);  
-    // gpio_init(LED_MODEL_PIN, GPO, 1, GPO_PUSH_PULL); 
-    gpio_init(EN_PIN, GPI, 1, GPI_PULL_UP);       
+    gpio_init(EN_PIN, GPI, 1, GPI_PULL_UP);
+
+    if (!gpio_get_level(EN_PIN))
+    {
+        board_check_id = 0;  // en board
+        zero_reval = 4.41;
+    }
+    else
+    {
+        board_check_id = 1;  // no en board
+        zero_reval = 3.41;
+    }
 }
 
-void led_output(void)
+
+void led_init()
 {
-    if (ccu61_get_trap_flag() && gpio_get_level(EN_PIN))
+    gpio_init(LED_RUN_PIN, GPO, 1, GPO_PUSH_PULL);
+    gpio_init(LED_ERR_PIN, GPO, 1, GPO_PUSH_PULL);
+    // gpio_init(LED_MODEL_PIN, GPO, 1, GPO_PUSH_PULL); 
+}
+
+void led_output()
+{
+    if (ccu61_get_trap_flag())
     {
         gpio_set_level(LED_ERR_PIN, 0); // 开启故障灯
         gpio_set_level(LED_RUN_PIN, 1); // 关闭运行灯

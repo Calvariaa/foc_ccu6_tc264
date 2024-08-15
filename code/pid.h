@@ -26,7 +26,7 @@ typedef struct
     float pre_output;
 } pid_param_t;
 extern pid_param_t servo_pid;
-extern pid_param_t speed_pid;
+// extern pid_param_t speed_pid;
 
 // typedef struct
 // {
