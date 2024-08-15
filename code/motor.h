@@ -38,7 +38,7 @@
 
 #include "zf_common_headfile.h"
 
-extern int16 encoder;
+extern int32 encoder;
 #define MOTOR_SPEED_OUT_PIN (ATOM1_CH6_P00_7) // 电机旋转速度输出引脚
 #define MOTOR_DIR_OUT_PIN (P00_5)             // 电机运行方向输出引脚
 

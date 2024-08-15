@@ -55,7 +55,7 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 
     timer_1ms++;
 
-    if (timer_1ms >= 50)
+    if (!protect_flag && timer_1ms >= 50)
         motor_speed_out();
 
     // if (abs(_read_dangle()) < I_Error_Speed)
@@ -70,20 +70,33 @@ int8 new_data_filter = 0;
 IFX_INTERRUPT(gtm_pwm_in, 0, GTM_PWM_IN_PRIORITY)
 {
     IfxGtm_Tim_In_update(&driver);
-    if(FALSE == driver.newData)
+
+    if (FALSE == driver.newData)
     {
-        if(gpio_get(MOTOR_PWM_IN_PIN))
+        if (gpio_get_level(MOTOR_PWM_IN_PIN))
         {
-            driver.periodTick = FPWM;                          //周期 driver.periodTick;
-            driver.pulseLengthTick = driver.periodTick;         //高电平时间 driver.pulseLengthTick;
+            if (new_data_filter > 0)
+            {
+                new_data_filter--;
+            }
+            else
+            {
+                driver.periodTick = 20000;
+                driver.pulseLengthTick = driver.periodTick;
+            }
         }
         else
         {
-            driver.periodTick = FPWM;
+            new_data_filter = 3;
+            driver.periodTick = 20000;
             driver.pulseLengthTick = 0;
         }
     }
-    pwm_in_duty = (int16)limit_ab((driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick), 0, PWM_PRIOD_LOAD);
+    else
+    {
+        new_data_filter = 0;
+    }
+    pwm_in_duty = (uint16)func_limit_ab((driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick), 0, PWM_PRIOD_LOAD);
 }
 
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)

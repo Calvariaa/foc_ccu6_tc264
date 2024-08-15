@@ -37,7 +37,7 @@
 #include "ifxGtm_Tim.h"
 #include "motor.h"
 
-int16 encoder = 0; // 编码器值
+int32 encoder = 0; // 编码器值
 motor_struct motor_control;
 ////-------------------------------------------------------------------------------------------------------------------
 //// 函数简介     电机转速信息输出引脚初始化
@@ -58,8 +58,11 @@ void motor_information_out_init(void)
 ////-------------------------------------------------------------------------------------------------------------------
 void motor_speed_out(void)
 {
-    encoder = encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
-    encoder_clear_count(AS5047P_TIM);         // 清除对应计数
+    // encoder = encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
+    // encoder_clear_count(AS5047P_TIM);         // 清除对应计数
+
+    // encoder = (int32)speed_filter.data_average;
+    encoder = (int32)50;
 
     motor_control.current_speed = encoder;
     if (encoder)
