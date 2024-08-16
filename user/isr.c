@@ -36,44 +36,30 @@
 #include "isr_config.h"
 #include "isr.h"
 
+#define START_DELAY_FLAG (timer_1ms < 1000 || !init_finish_flag)
+
  // PWM中断处理函数
 IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
 {
     IfxCpu_enableInterrupts();
     IfxCcu6_clearInterruptStatusFlag(&MODULE_CCU61, IfxCcu6_InterruptSource_t12PeriodMatch);
 
-    if (timer_1ms > 50)  // 50ms
-        foc_commutation();
-}
 
-uint64 timer_1ms = 0u;
-// **************************** PIT中断函数 ****************************
-IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
-{
-    interrupt_global_enable(0); // 开启中断嵌套
-    pit_clear_flag(CCU60_CH0);
-
-    if (init_finish_flag)
-        timer_1ms++;
-
-    if (timer_1ms < 50)
+    if (START_DELAY_FLAG)
         return;
 
-    motor_speed_out();
-
-    // if (abs(_read_dangle()) < I_Error_Speed)
-    // {
-    //     if (I_Error_Cnt <= I_Error_Dat)
-    //         I_Error_Cnt++;
-    // }
 
     if (pwm_in_duty < 324)
     {
-        if (protect_flag == 0)
-            set_zero_angle(get_magnet_angle(get_magnet_val()));
+        // if (protect_flag == 0)
+        set_zero_angle(get_magnet_angle(get_magnet_val()));
 
-        full_rotations = 0;
+        reset_rotations();
+        // full_rotations = 0;
         full_rotations_last = 0;
+
+        set_angle = theta_magnet;
+        expect_rotations = full_rotations;
 
         protect_flag = 1;
         pwm_in_speed = 0;
@@ -90,17 +76,54 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     }
     else
     {
-        if (protect_flag == 0)
-            set_zero_angle(get_magnet_angle(get_magnet_val()));
+        // if (protect_flag == 0)
+        set_zero_angle(get_magnet_angle(get_magnet_val()));
 
-        full_rotations = 0;
+
+        reset_rotations();
+        // full_rotations = 0;
         full_rotations_last = 0;
+
+        set_angle = theta_magnet;
+        expect_rotations = full_rotations;
 
         protect_flag = 1;
         pwm_in_speed = 0;
 
         motor_control.set_speed = 0;
     }
+
+    foc_commutation();
+}
+
+uint64 timer_1ms = 0u;
+uint16 ierror_count = 0u;
+// **************************** PIT中断函数 ****************************
+IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
+{
+    interrupt_global_enable(0); // 开启中断嵌套
+    pit_clear_flag(CCU60_CH0);
+
+    if (init_finish_flag)
+        timer_1ms++;
+
+    if (START_DELAY_FLAG)
+        return;
+
+    motor_speed_out();
+
+    if (fabsf(Park_in.u_q) >= FOC_UQ_MAX) {
+        if (ierror_count < 32760)
+            ierror_count++;
+    }
+    else ierror_count = 0u;
+
+    // if (abs(_read_dangle()) < I_Error_Speed)
+    // {
+    //     if (ierror_count <= I_Error_Dat)
+    //         ierror_count++;
+    // }
+
 }
 
 // 输入捕获

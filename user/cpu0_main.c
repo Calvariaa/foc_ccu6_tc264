@@ -59,7 +59,7 @@ int core0_main(void)
 
     move_filter_double_init(&id_ref_filter); // 滑动滤波初始化
     move_filter_double_init(&iq_ref_filter); // 滑动滤波初始化
-    // move_filter_init(&speed_filter); // 滑动滤波初始化
+    move_filter_double_init(&speed_filter); // 滑动滤波初始化
 
     // 初始化输出速度与方向信息的引脚
     motor_information_out_init();
@@ -95,17 +95,21 @@ int core0_main(void)
         data_send[4] = (float)pwm_in_duty;
         data_send[5] = (float)motor_control.current_speed;
         data_send[13] = motor_control.dir;
-        data_send[14] = set_angle_accel;
+        data_send[14] = set_angle;
         data_send[15] = motor_control.set_speed;
         data_send[16] = (float)zero_angle;
         data_send[17] = (float)(theta_magnet + full_rotations * pi_2);
         data_send[18] = (float)(theta_magnet_last + full_rotations_last * pi_2);
         data_send[19] = (float)(((theta_magnet + full_rotations * pi_2) - (theta_magnet_last + full_rotations_last * pi_2)));
+        data_send[20] = (float)((set_angle + (double)expect_rotations * pi_2) - (theta_magnet + (double)full_rotations * pi_2));
+        data_send[21] = (float)expect_rotations;
+        data_send[22] = (float)full_rotations;
+        data_send[23] = (float)speed_filter.data_average;
 
         // pwm_set_freq(MOTOR_SPEED_OUT_PIN, 50, 5000);
         if (timer_1ms >= 50)
         {
-            for (int8 i = 0; i <= 20; i++)
+            for (int8 i = 0; i <= 23; i++)
                 printf("%f,", data_send[i]);
             printf("-1.0\r\n");
         }

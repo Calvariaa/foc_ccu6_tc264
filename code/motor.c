@@ -61,9 +61,9 @@ void motor_speed_out(void)
     encoder = (int32)encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
     encoder_clear_count(AS5047P_TIM);         // 清除对应计数
 
-    motor_control.current_speed = encoder;
+    // motor_control.current_speed = encoder;
 
-    // encoder = (int32)(speed_filter.data_average);
+    encoder = (int32)(-speed_filter.data_average);
     // encoder = (int32)50;
 
     // motor_control.current_speed = encoder;

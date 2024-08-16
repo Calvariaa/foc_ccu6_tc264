@@ -329,7 +329,7 @@ ipark_variable Current_Close_Loop(ipark_variable ref_park, park_variable I_park)
 // #define CURRENTLOOP
 // #define TESTMODE
 
-float set_angle_accel = 0;
+double set_angle = 0;
 clark_variable adcd_struct;
 park_variable I_out;
 ipark_variable Park_in;
@@ -378,14 +378,14 @@ void foc_commutation()
     data_send[7] = Park_in.u_d * 1000;
 #elif defined TESTMODE
     // test
-    set_angle_accel += ANGLE_TO_RAD(0.02);
-    if (set_angle_accel >= pi_2) {
+    set_angle += ANGLE_TO_RAD(0.02);
+    if (set_angle >= pi_2) {
         expect_rotations++;
-        set_angle_accel -= pi_2;
+        set_angle -= pi_2;
     }
-    if (set_angle_accel < -pi_2) {
+    if (set_angle < -pi_2) {
         expect_rotations--;
-        set_angle_accel += pi_2;
+        set_angle += pi_2;
     }
 
     Park_in.u_d = 0;
@@ -400,32 +400,38 @@ void foc_commutation()
     Park_in.u_d = 0;
 
     // test
-    // set_angle_accel += ANGLE_TO_RAD(0.2);
-    set_angle_accel += motor_control.set_speed;
-    if (set_angle_accel >= pi_2) {
+    // set_angle += ANGLE_TO_RAD(0.2);
+    if (ierror_count < 20)
+        set_angle += motor_control.set_speed;
+
+    if (ierror_count > 1000) {
+        set_angle = theta_magnet;
+        expect_rotations = full_rotations;
+    }
+    if (set_angle >= pi_2) {
         expect_rotations++;
-        set_angle_accel -= pi_2;
+        set_angle -= pi_2;
     }
-    if (set_angle_accel < -pi_2) {
+    if (set_angle < -pi_2) {
         expect_rotations--;
-        set_angle_accel += pi_2;
+        set_angle += pi_2;
     }
 
 
-    // move_filter_calc(&speed_filter, (int32)get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD) * 10);
+    move_filter_double_calc(&speed_filter, get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD * 8));
 
 //    (int32)get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD);
 
     // Park_in.u_q = 2;
     if (!protect_flag)
-        Park_in.u_q = pid_solve(&servo_pid, (set_angle_accel + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
+        Park_in.u_q = pid_solve(&servo_pid, (set_angle + expect_rotations * pi_2) - (theta_magnet + full_rotations * pi_2));
     else
         Park_in.u_q = 0;
     // Park_in.u_q = pid_solve(&servo_pid, (ANGLE_TO_RAD(0)) - (theta_magnet + full_rotations * pi_2)) / 1000.f;
 
     FOC_S.V_Clark = iPark_Calc(Park_in, -theta_elec);
 
-    data_send[10] = (float)(set_angle_accel + expect_rotations * pi_2);
+    data_send[10] = (float)(set_angle + expect_rotations * pi_2);
     data_send[11] = (float)Park_in.u_q;
     // data_send[12] = (float)speed_filter.data_average;
 

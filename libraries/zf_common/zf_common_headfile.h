@@ -116,6 +116,7 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MINMAX(input, low, upper) MIN(MAX(input, low), upper)
+#define FOC_UQ_MAX 6
 
 #define PID_CREATE(_kp, _ki, _kd, _low_pass, max_p, max_i, max_d, max_pid) \
     {                                                                     \
@@ -148,5 +149,6 @@
 extern uint64 timer_1ms;
 extern bool protect_flag;
 extern bool init_finish_flag;
+extern uint16 ierror_count;
 #endif
 

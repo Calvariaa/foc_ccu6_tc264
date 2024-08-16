@@ -85,6 +85,7 @@ double get_elec_angle(uint16 val);
 float _normalizeAngle(float angle);
 double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint16 T);
 void set_zero_angle(float angle);
+void reset_rotations();
 
 extern double theta_elec;
 extern uint16 theta_val;
@@ -97,5 +98,8 @@ extern int32 full_rotations_last;
 
 extern double zero_reval;
 extern double zero_angle;
+
+extern float set_angle;
+extern int32 expect_rotations;
 
 #endif /*_AS5047P_H*/

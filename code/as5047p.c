@@ -401,6 +401,11 @@ int32 get_magnet_angle_rot(double reval)
     return angle_rot_dat;
 }
 
+void reset_rotations()
+{
+    angle_rot_dat = 0;
+}
+
 double get_elec_angle(uint16 val)
 {
     double reval;

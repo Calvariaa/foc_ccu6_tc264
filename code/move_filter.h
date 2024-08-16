@@ -32,7 +32,7 @@ extern move_filter_double_struct current_b_filter;
 extern move_filter_double_struct current_c_filter;
 extern move_filter_double_struct iq_ref_filter;
 extern move_filter_double_struct id_ref_filter;
-extern move_filter_struct speed_filter;
+extern move_filter_double_struct speed_filter;
 
 void move_filter_double_init(move_filter_double_struct *move_average);
 void move_filter_double_calc(move_filter_double_struct *move_average, double new_data);

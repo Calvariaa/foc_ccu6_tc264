@@ -50,12 +50,12 @@ void board_check_init()
     if (!gpio_get_level(EN_PIN))
     {
         board_check_id = 0;  // en board
-        zero_reval = 4.41;
+        zero_reval = 4.61;
     }
     else
     {
         board_check_id = 1;  // no en board
-        zero_reval = 3.41;
+        zero_reval = 3.21;
     }
 }
 
