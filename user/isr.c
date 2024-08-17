@@ -79,7 +79,6 @@ IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
         // if (protect_flag == 0)
         set_zero_angle(get_magnet_angle(get_magnet_val()));
 
-
         reset_rotations();
         // full_rotations = 0;
         full_rotations_last = 0;
@@ -110,7 +109,8 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
     if (START_DELAY_FLAG)
         return;
 
-    motor_speed_out();
+    if (timer_1ms % 5 == 0)
+        motor_speed_out();
 
     if (fabsf(Park_in.u_q) >= FOC_UQ_MAX) {
         if (ierror_count < 32760)

@@ -61,15 +61,14 @@ void motor_speed_out(void)
     encoder = (int32)encoder_get_count(AS5047P_TIM); // 采集对应编码器数据
     encoder_clear_count(AS5047P_TIM);         // 清除对应计数
 
-    // motor_control.current_speed = encoder;
+    motor_control.current_speed = encoder;
 
-    encoder = (int32)(-speed_filter.data_average);
-    // encoder = (int32)50;
+    // encoder = (int32)(-speed_filter.data_average);
 
     // motor_control.current_speed = encoder;
     if (encoder)
     {
-        pwm_set_freq(MOTOR_SPEED_OUT_PIN, func_abs(encoder) * 1024, 5000);
+        pwm_set_freq(MOTOR_SPEED_OUT_PIN, func_abs(encoder) * 1000, 5000);
         if (encoder < 0)
             gpio_set_level(MOTOR_DIR_OUT_PIN, 1);
         if (encoder > 0)

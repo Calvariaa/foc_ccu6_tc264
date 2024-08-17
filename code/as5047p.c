@@ -426,7 +426,7 @@ float _normalizeAngle(float angle)
     return a >= 0 ? a : (a + pi_2);
 }
 
-double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint16 T)
+double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint32 T)
 {
     return (double)(((reval_rot - reval_rot_last) * pi_2) + (reval - reval_last)) * T;
 }

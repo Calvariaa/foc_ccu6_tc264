@@ -418,7 +418,7 @@ void foc_commutation()
     }
 
 
-    move_filter_double_calc(&speed_filter, get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD * 8));
+    move_filter_double_calc(&speed_filter, get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, 12000));
 
 //    (int32)get_magnet_speed(theta_magnet, full_rotations, theta_magnet_last, full_rotations_last, PWM_PRIOD_LOAD);
 

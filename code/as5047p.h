@@ -83,7 +83,7 @@ double get_magnet_angle(uint16 val);
 int32 get_magnet_angle_rot(double reval);
 double get_elec_angle(uint16 val);
 float _normalizeAngle(float angle);
-double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint16 T);
+double get_magnet_speed(double reval, int32 reval_rot, double reval_last, int32 reval_rot_last, uint32 T);
 void set_zero_angle(float angle);
 void reset_rotations();
 
