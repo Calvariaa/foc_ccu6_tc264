@@ -1,5 +1,7 @@
 # tc264 基于ccu6模块的foc设计
 
+<img src="https://i.imgur.com/expgjKT.jpeg=86x192" width="300px">
+
 - [角度环拟合速度环测试](https://www.bilibili.com/video/BV1TAWcePEq1/)
 - [国赛预赛3m8/s演示视频](https://www.bilibili.com/video/BV1g7W3eeEPe/)
 ------
