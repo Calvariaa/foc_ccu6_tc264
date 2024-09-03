@@ -1,8 +1,8 @@
 # tc264 基于ccu6模块的foc设计
 
-[角度环拟合速度环测试](https://www.bilibili.com/video/BV1TAWcePEq1/)
-[国赛预赛3m8/s演示视频](https://www.bilibili.com/video/BV1g7W3eeEPe/)
-
+- [角度环拟合速度环测试](https://www.bilibili.com/video/BV1TAWcePEq1/)
+- [国赛预赛3m8/s演示视频](https://www.bilibili.com/video/BV1g7W3eeEPe/)
+------
 ## 说两句
 - 19届国赛一等奖认证方案可行性，实验室速度可达到4m/s不怎么发烫
 - 板子就六根线连到fd6288预驱，感觉是个人就会画，不放了（雾）
