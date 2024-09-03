@@ -8,11 +8,11 @@
 - 程序是三天肝完的，请大佬多多指教
 - 都到这一步了还不会用就写issue或者直接问我吧
 
-  ## 致谢
-  - SimpleFOC
-  - DengFOC
-  - STC FOC Lite v2 （感谢王佬的闭环思路，猛猛抄）
-  - 18届夏理单车越野
-  - SEEKFREE
-  - 西凉马戏团
-  - 智控协会会长大人
+## 致谢
+- SimpleFOC
+- DengFOC
+- STC FOC Lite v2 （感谢王佬的闭环思路，猛猛抄）
+- 18届夏理单车越野
+- SEEKFREE
+- 西凉马戏团
+- 智控协会会长大人
